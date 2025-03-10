@@ -1,8 +1,14 @@
-from Card import Card
+from Backend.Card import Card
+
+from Backend.Deck import Deck
 
 from SlapjackRules import SlapjackRules
 
-da_card = Card("Queen", "Hearts")
 
-print(SlapjackRules.is_jack(da_card.rank))
+new_deck = Deck()
 
+print(new_deck)
+
+new_deck.shuffle()
+
+print(f"\nShuffled \n{new_deck}")
