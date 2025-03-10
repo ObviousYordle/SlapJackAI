@@ -13,10 +13,11 @@ class Deck:
     def shuffle(self):
         random.shuffle(self.deck)
 
+    def get_deck(self):
+        return self.deck
+
 
     """ Print out cards in deck"""
     def __str__(self):
-        deck_str = ""
-        for card in self.deck:
-            deck_str += str(card) + "\n"  # Add each card string representation followed by a newline
-        return deck_str
+        # Print new line and print each card __str__
+        return "\n".join(str(card) for card in self.deck)

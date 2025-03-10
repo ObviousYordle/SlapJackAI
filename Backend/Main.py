@@ -4,11 +4,16 @@ from Backend.Deck import Deck
 
 from SlapjackRules import SlapjackRules
 
+from Backend.Player import Player
+
 
 new_deck = Deck()
 
-print(new_deck)
-
 new_deck.shuffle()
 
-print(f"\nShuffled \n{new_deck}")
+david = Player("David", False)
+
+david.add_card(new_deck.get_deck().pop())
+david.add_card(new_deck.get_deck().pop())
+
+print(david)
