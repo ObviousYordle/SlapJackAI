@@ -1,29 +1,24 @@
+"""Contains player info, like name, their deck (also their score"""
 class Player:
 
-    def __init__(self, name, is_ai):
+    def __init__(self, name):
         self.name = name
-        self.is_ai = is_ai # boolean
-        self.hand = []
+        self.deck = []
         self.score = 0
 
-    """Add card to player hand"""
+    """Add card to player deck,"""
     def add_card(self, card):
-        self.hand.append(card)
+        self.deck.append(card)
 
+    """The "flip" of a card"""
     def flip_card(self):
-        if self.hand:
-            return self.hand.pop
+        if self.deck:
+            return self.deck.pop()
         return None
 
-    def score(self):
-        return self.score
 
-    def print_hand(self):
-        print(f"{self.name}'s hand:")
-        for card in self.hand:
-            print(card)
-
+    """Prints player's whole deck, ex: queen of hearts, king of diamonds, etc"""
     def __str__(self):
-        # Separate with "," and print each ard in hand
-        hand_str = ", ".join(str(card) for card in self.hand)
+        # Separate with "," and print each card in hand
+        hand_str = ", ".join(str(card) for card in self.deck)
         return f"{self.name}'s hand: {hand_str}"

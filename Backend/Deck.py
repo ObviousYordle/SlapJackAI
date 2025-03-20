@@ -13,10 +13,6 @@ class Deck:
     def shuffle(self):
         random.shuffle(self.deck)
 
-    def get_deck(self):
-        return self.deck
-
-
     """ Print out cards in deck"""
     def __str__(self):
         # Print new line and print each card __str__
