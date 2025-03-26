@@ -1,4 +1,3 @@
-from deck import Deck
 from Card import Card
 import random
 
