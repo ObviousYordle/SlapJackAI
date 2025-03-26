@@ -15,15 +15,31 @@
         <button onclick="addPlayer()">Add Player</button>
     </div>
 
-    <div id="player-info"></div> <!-- This is where the player's info and deck will be shown -->
+    <div id="player-info"></div> <!-- Player name and deck -->
 
-    <!-- Add the flip card button here -->
-    <div id="flip-card-container" style="display:none;">
-        <button onclick="flipCard()">Flip Card</button>
-        <div id="flipped-card"></div> <!-- This is where the flipped card will be displayed -->
-        <div id="remaining-deck"></div>
-
+    <!-- Card container to show card -->
+    <div id="card-container" class="card-container" style="display:none;">
+        <div class="card">
+            <!-- Front face of the card -->
+            <div class="card-face front">
+                <div class="card-rank" id="card-rank">Card Front</div>  <!-- Card rank (number) -->
+                <div class="card-suit" id="card-suit"></div>  <!-- Card suit (Spades/Clubs/Diamonds/Hearts -->
+            </div>
+        </div>
     </div>
+
+
+
+    <!-- Flip card button, initially hidden until player creation -->
+    <button id="flip-button" style="display: none;" onclick="flipCard()">Flip Card</button>
+
+    <!-- Display flipped card and remaining cards -->
+    <div id="flipped-card"></div>
+    <div id="deck-visual"  style="display:none;">
+    <h3>Remaining Deck </h3>
+    <div id="remaining-deck" ></div> <!-- This will display the visual number of remaining cards -->
+    </div>
+
 
     <script src="script.js"></script>
 </body>

@@ -1,19 +1,103 @@
-/* Frontend/styles.css */
 body {
     font-family: Arial, sans-serif;
     text-align: center;
+    background-color: #f0f0f0;
     padding: 20px;
 }
 
-h1 {
-    color: #4CAF50;
+.card-container {
+    margin: 20px auto;
+    width: 150px;
+    height: 200px;
+    perspective: 1000px; /* Keep perspective for 3D effect */
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-div {
-    margin: 20px;
+.card {
+    width: 100%;
+    height: 100%;
+    background-color: white;
+    border: 2px solid #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    font-weight: bold;
+    border-radius: 10px; /* Rounded corners */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5); /* Shadow for a more realistic look */
+    position: relative;
 }
 
-#player-info {
+.card-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden; /* Hide the back face during flip */
+}
+
+.front {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 32px;
+    flex-direction: column;
+}
+
+.card-rank {
+    font-size: 48px; /* Larger rank size */
+    font-weight: bold;
+    color: #333; /* Default color for rank */
+}
+
+.card-suit {
+    font-size: 24px; /* Smaller suit size */
+    color: #333; /* Default color for suit */
+}
+
+.card-suit.red {
+    color: red; /* Red for hearts and diamonds */
+}
+
+.card-suit.black {
+    color: black; /* Black for clubs and spades */
+}
+
+/* Center the button within its container */
+#flip-button {
+    display: block;
+    margin: 20px auto;
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #4CAF50; /* Green background */
+    color: white; /* White text */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-align: center;
+}
+
+/* Optional: Add hover effect */
+#flip-button:hover {
+    background-color: #45a049;
+}
+
+#deck-visual {
     margin-top: 20px;
-    font-size: 1.2em;
+    width: 150px;
+    height: 200px;
+    background-color: #f4f4f4;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5); /* Shadow for a more realistic look */
 }
+
+#remaining-cards {
+    margin-top: 10px;
+    font-size: 48px;  /* Large number to represent the remaining cards */
+    font-weight: bold;
+}
+
