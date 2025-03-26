@@ -1,4 +1,4 @@
-from Backend.Player import Player
+from Player import Player
 
 """AiPlayer inherits Player, gets same moves but has added difficulty changer"""
 class AiPlayer(Player):

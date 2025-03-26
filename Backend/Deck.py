@@ -1,4 +1,5 @@
-from Backend.Card import Card
+from deck import Deck
+from Card import Card
 import random
 
 class Deck:
@@ -17,3 +18,4 @@ class Deck:
     def __str__(self):
         # Print new line and print each card __str__
         return "\n".join(str(card) for card in self.deck)
+

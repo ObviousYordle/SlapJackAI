@@ -3,11 +3,11 @@ import time
 from Backend.AiPlayer import AiPlayer
 from Backend.Card import Card
 
-from Backend.Deck import Deck
+from Deck import Deck
 
 from SlapjackRules import SlapjackRules
 
-from Backend.Player import Player
+from Player import Player
 
 # Trying to mimic game on console
 
