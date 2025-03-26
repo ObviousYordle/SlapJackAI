@@ -30,8 +30,10 @@ played_pile = []
 # Flag for player turn
 player_turn = True
 
+print(str(player.flip_card()))
+
 # While both players have cards in their deck
-while player.deck and robot.deck:
+while player.deck and robot.deck and False:
 
     # Countdown
     SlapjackRules.countdown(3)

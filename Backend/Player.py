@@ -13,7 +13,7 @@ class Player:
     """The "flip" of a card"""
     def flip_card(self):
         if self.deck:
-            return self.deck.pop()
+            return self.deck.pop(0)
         return None
 
 

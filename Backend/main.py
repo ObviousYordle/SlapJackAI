@@ -1,6 +1,8 @@
 #Fast API Import
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 import uvicorn
+import os
 
 import time
 from Deck import Deck
@@ -9,12 +11,14 @@ from Card import Card
 
 app = FastAPI()
 
-# Create fresh deck
-@app.get("/deck")
-def get_deck():
-    fresh_deck = Deck()
-    fresh_deck.shuffle()
-    return {"deck": [str(card) for card in fresh_deck.deck]}  # Return deck as strings
+# Serve static files from the Frontend directory
+frontend_path = os.path.join(os.path.dirname(__file__), "..", "Frontend")
+
+# Mount static files (HTML, CSS, JS)
+app.mount("/static", StaticFiles(directory=str(frontend_path)), name="static")
+
+players = {}
+
 
 # Create player with deck, just testing
 @app.get("/create_player/{name}")
@@ -22,22 +26,23 @@ def create_player(name: str):
     fresh_deck = Deck()
     fresh_deck.shuffle()
     player = Player(name)
+    players[name] = player
     player.deck = fresh_deck.deck[:len(fresh_deck.deck)//2]
-    return {"player_name": name, "player hand": player}
+    return {"player_name": name, "player_deck": str(player)}
 
-# Route for player to flip a card
+# Mimic flipping of a card
 @app.get("/flip_card/{player_name}")
 def flip_card(player_name: str):
-    fresh_deck = Deck()
-    fresh_deck.shuffle()
-    player = Player(player_name)
-    player.deck = fresh_deck.deck[:len(fresh_deck.deck)//2]  # Give half the deck to the player
-    card_played = player.flip_card()  # Player flips a card
+    player = players[player_name]
 
-    if card_played:
-        return {"player": player_name, "card": str(card_played)}
+    if player and player.deck:
+        card_played = player.flip_card()  # This should return a card object or string
+        return {"player": player_name, "card": str(card_played), "remaining_deck": str(player)}  # "card" is the key
     else:
         return {"message": "No cards left in the deck!"}
+
+
+
 
 
 origins = [

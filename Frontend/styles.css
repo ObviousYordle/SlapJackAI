@@ -1,0 +1,19 @@
+/* Frontend/styles.css */
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    padding: 20px;
+}
+
+h1 {
+    color: #4CAF50;
+}
+
+div {
+    margin: 20px;
+}
+
+#player-info {
+    margin-top: 20px;
+    font-size: 1.2em;
+}
