@@ -28,7 +28,7 @@ def create_player(name: str):
     player = Player(name)
     players[name] = player
     player.deck = fresh_deck.deck[:len(fresh_deck.deck)//2]
-    return {"player_name": name, "player_deck": str(player)}
+    return {"player_name": name, "player_deck": str(player), "deck_size": len(player.deck)}
 
 # Mimic flipping of a card
 @app.get("/flip_card/{player_name}")
@@ -37,7 +37,8 @@ def flip_card(player_name: str):
 
     if player and player.deck:
         card_played = player.flip_card()  # This should return a card object or string
-        return {"player": player_name, "card": str(card_played), "remaining_deck": str(player)}  # "card" is the key
+        remaining_deck = len(player.deck)  # Get remaining deck size
+        return {"player": player_name, "card": str(card_played), "remaining_deck": remaining_deck}  # "card" is the key
     else:
         return {"message": "No cards left in the deck!"}
 
