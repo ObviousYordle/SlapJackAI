@@ -64,24 +64,56 @@ body {
     color: black; /* Black for clubs and spades */
 }
 
-/* Center the button within its container */
-#flip-button {
-    display: block;
-    margin: 20px auto;
-    padding: 10px 20px;
+#add-player-button{
+    display: inline-block;
+    padding: 5px 5px;
     font-size: 16px;
     background-color: #4CAF50; /* Green background */
-    color: white; /* White text */
+    color: white;
     border: none;
-    border-radius: 5px;
+    border-radius: 8px; /* Rounded corners */
     cursor: pointer;
     text-align: center;
+    margin-top: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); /* Soft shadow for depth */
+    transition: background-color 0.3s, transform 0.3s ease, box-shadow 0.3s;
 }
 
-/* Optional: Add hover effect */
-#flip-button:hover {
-    background-color: #45a049;
+
+/* Active effect (when clicked) */
+#add-player-button:active {
+    transform: scale(1.02); /* Shrink the button a bit when clicked */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Softer shadow on click */
 }
+
+
+/* Styling for the Start, Add Player, and React Buttons */
+#start-button, #react-button {
+    display: inline-block;
+    padding: 12px 24px;
+    font-size: 16px;
+    background-color: #4CAF50; /* Green background */
+    color: white;
+    border: none;
+    border-radius: 8px; /* Rounded corners */
+    cursor: pointer;
+    text-align: center;
+    margin-top: 100px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); /* Soft shadow for depth */
+    transition: background-color 0.3s, transform 0.3s ease, box-shadow 0.3s;
+    position: absolute;
+    top: 50%;  /* Center vertically */
+    left: 50%; /* Center horizontally */
+    transform: translate(-50%, -50%); /* Adjust for exact center */
+}
+
+/* Additional button styles on hover */
+#start-button:hover, #react-button:hover {
+    background-color: #45a049; /* Darker green on hover */
+    transform: translate(-50%, -50%) scale(1.05); /* Slightly enlarge on hover */
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3); /* Increase shadow on hover */
+}
+
 
 #deck-visual {
     margin-top: 20px;

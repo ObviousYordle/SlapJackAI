@@ -23,12 +23,33 @@ players = {}
 # Create player with deck, just testing
 @app.get("/create_player/{name}")
 def create_player(name: str):
+    # Create a fresh deck
     fresh_deck = Deck()
+
+    # Shuffle the deck to randomize the order
     fresh_deck.shuffle()
+
+    fresh_deck.deck = fresh_deck.deck[:len(fresh_deck.deck) // 2]  # Split deck for the player
+
+    jacks = [
+        Card("Jack", "Hearts"),
+        Card("Jack", "Diamonds"),
+        Card("Jack", "Clubs"),
+        Card("Jack", "Spades")
+    ]
+
+    fresh_deck.deck = [card for card in fresh_deck.deck if card.rank != "Jack"]
+    fresh_deck.deck.extend(jacks)
+    fresh_deck.shuffle()
+
+    # Create the player and assign the shuffled deck
     player = Player(name)
     players[name] = player
-    player.deck = fresh_deck.deck[:len(fresh_deck.deck)//2]
+
+    player.deck = fresh_deck.deck
+
     return {"player_name": name, "player_deck": str(player), "deck_size": len(player.deck)}
+
 
 # Mimic flipping of a card
 @app.get("/flip_card/{player_name}")

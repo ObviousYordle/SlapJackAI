@@ -12,7 +12,7 @@
     <div>
         <label for="player-name">Enter Player Name:</label>
         <input type="text" id="player-name" placeholder="Enter name">
-        <button onclick="addPlayer()">Add Player</button>
+        <button id="add-player-button" onclick="addPlayer()">Add Player</button>
     </div>
 
     <div id="player-info"></div> <!-- Player name and deck -->
@@ -28,16 +28,17 @@
         </div>
     </div>
 
+    <!-- Start Button -->
+    <button id="start-button" onclick="startFlipping()" style="display:none;">Start Flipping</button>
 
-
-    <!-- Flip card button, initially hidden until player creation -->
-    <button id="flip-button" style="display: none;" onclick="flipCard()">Flip Card</button>
+    <!-- React Button (Initially hidden) -->
+    <button id="react-button" onclick="reactToJack()" style="display:none;">React!</button>
 
     <!-- Display flipped card and remaining cards -->
     <div id="flipped-card"></div>
-    <div id="deck-visual"  style="display:none;">
-    <h3>Remaining Deck </h3>
-    <div id="remaining-deck" ></div> <!-- This will display the visual number of remaining cards -->
+    <div id="deck-visual" style="display:none;">
+        <h3>Remaining Deck</h3>
+        <div id="remaining-deck"></div> <!-- This will display the visual number of remaining cards -->
     </div>
 
 
