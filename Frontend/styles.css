@@ -87,6 +87,38 @@ body {
 }
 
 
+/* General button styles for all buttons */
+.button {
+    display: inline-block;
+    padding: 12px 24px;
+    font-size: 16px;
+    background-color: #4CAF50; /* Green background */
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: center;
+    margin-top: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s, transform 0.3s ease, box-shadow 0.3s;
+}
+
+/* Hover effects for buttons */
+.button:hover {
+    background-color: #45a049; /* Darker green for play, red for rules on hover */
+    transform: scale(1.05);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Active effects for buttons */
+.button:active {
+    transform: scale(1.02);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+
+
+
 /* Styling for the Start, Add Player, and React Buttons */
 #start-button, #react-button {
     display: inline-block;

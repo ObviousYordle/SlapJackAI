@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slapjack Game</title>
+    <link rel="stylesheet" href="styles.css"> <!-- Link to your CSS file -->
+</head>
+<body>
+    <h1>Slapjack Against AI</h1>
+    <p>Welcome to the Slapjack game! Get ready to play against the AI.</p>
+
+    <!-- Generalized buttons with the same class "button" but different ids for specific functionality -->
+    <button class="button" id="play-button" data-href="/static/index.html">Play</button>
+    <button class="button" id="rules-button" data-href="/static/rules.html">Rules</button>
+
+    <script>
+        // Generalized function to handle redirection
+        document.querySelectorAll('.button').forEach(button => {
+            button.addEventListener('click', function() {
+                // Use the data-href attribute for the link path
+                window.location.href = button.getAttribute('data-href');
+            });
+        });
+    </script>
+</body>
+</html>

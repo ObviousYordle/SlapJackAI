@@ -17,6 +17,7 @@ frontend_path = os.path.join(os.path.dirname(__file__), "..", "Frontend")
 # Mount static files (HTML, CSS, JS)
 app.mount("/static", StaticFiles(directory=str(frontend_path)), name="static")
 
+
 players = {}
 
 
@@ -72,5 +73,6 @@ origins = [
 ]
 
 # With this, in terminal, just run "python .\main.py"
+# Also open http://localhost:8000/static/index.html
 if __name__ == "__main__":
     uvicorn.run(app, host="localhost", port=8000)
