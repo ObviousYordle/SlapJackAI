@@ -1,15 +1,15 @@
 console.log("script.js loaded successfully");
 
-let playerName = '';  // Store player name
-let startTime = 0;    // Timer start time
-let reactionTime = 0; // Player's reaction time
-let flipInterval;     // Interval ID for flipping cards
-let isJackDrawn = false; // Flag to check if Jack is drawn
+let playerName = '';
+let startTime = 0;
+let reactionTime = 0;
+let flipInterval;
+let isJackDrawn = false;
+let reactionTimes = [];
+let reactionsRemaining = 5;  // Can adjust number of reactions here
 
-// Add player function
+// Add player
 function addPlayer() {
-    console.log("Button clicked!");
-
     playerName = document.getElementById("player-name").value;
 
     if (!playerName) {
@@ -20,89 +20,69 @@ function addPlayer() {
     fetch(`/create_player/${playerName}`)
         .then(response => response.json())
         .then(data => {
-            console.log("Server response:", data);
-
             document.getElementById("player-info").innerHTML =
-                `<h2>Player: ${data.player_name}</h2>
-                 <p>Deck: ${data.player_deck}</p>`;
+                `<h2>Player: ${data.player_name}</h2>`;
 
-            updateRemainingDeck(data.deck_size);
+            // Hide player name input and button
+            document.getElementById("player-entry").style.display = "none";
 
+            // Show game elements
             document.getElementById("card-container").style.display = "block";
-            document.getElementById("deck-visual").style.display = "block";
-
-            // Show the Start button to initiate the flipping
             document.getElementById("start-button").style.display = "block";
+            document.getElementById("reaction-instruction").style.display = "block";  // Show the instruction
+            document.getElementById("reaction-info").style.display = "block";  // Show the instruction
+            document.getElementById("reactions-remaining").innerText = reactionsRemaining; // Display remaining reactions
         })
         .catch(error => {
             console.error("Error:", error);
         });
 }
 
-// Start Flipping Cards function (starts the interval)
+// Starts the deck flipping when the button is clicked
 function startFlipping() {
-    console.log("Starting card flipping...");
-
-    // Start auto flipping every 2 seconds
-    flipInterval = setInterval(flipCard, 2000);
-
-    // Hide the Start button after starting the flipping
+    flipInterval = setInterval(flipCard, 1250);
     document.getElementById("start-button").style.display = "none";
-
-    // React button should be hidden initially and only shown when a Jack is drawn
+    document.getElementById("reaction-instruction").style.display = "none";  // Hide instruction
     document.getElementById("react-button").style.display = "block";
+    document.getElementById("reaction-info").style.display = "block";
+
+
 }
 
-// Flip card function (auto flips every 2 seconds)
+// The function of the actual card flip
 function flipCard() {
-    if (!playerName) {
-        console.error("Player name is undefined. Flip card action cannot proceed.");
-        return;
-    }
-
-    console.log("Flipping card for player:", playerName);
+    if (!playerName) return;
 
     fetch(`/flip_card/${playerName}`)
         .then(response => response.json())
         .then(data => {
-            console.log("Flipped card:", data);
             if (data.card) {
-                const cardContent = data.card;
-                const cardParts = cardContent.split(" of ");
-                const rank = cardParts[0];
-                const suit = cardParts[1];
+                const [rank, suit] = data.card.split(" of ");
+                document.getElementById("card-rank").innerText = rank;
+                const suitElem = document.getElementById("card-suit");
+                suitElem.innerText = suit;
 
-                // Update the rank and suit of the card
-                const cardRankElement = document.getElementById("card-rank");
-                const cardSuitElement = document.getElementById("card-suit");
-
-                cardRankElement.innerText = rank;
-                cardSuitElement.innerText = suit;
-
-                // Apply color based on suit
                 if (suit === 'Hearts' || suit === 'Diamonds') {
-                    cardSuitElement.classList.add('red');
-                    cardSuitElement.classList.remove('black');
+                    suitElem.classList.add('red');
+                    suitElem.classList.remove('black');
                 } else {
-                    cardSuitElement.classList.add('black');
-                    cardSuitElement.classList.remove('red');
-                }
-
-                // Update the remaining deck
-                document.getElementById("remaining-deck").innerHTML =
-                    `<p>Remaining Deck: ${data.remaining_deck}</p>`;
-
-                // If Jack is drawn, show the React button and start the timer
-                if (rank === 'Jack') {
-                    isJackDrawn = true;
-                    document.getElementById("react-button").style.display = "block";
-                    startTime = performance.now();
+                    suitElem.classList.add('black');
+                    suitElem.classList.remove('red');
                 }
 
                 updateRemainingDeck(data.remaining_deck);
+
+                if (rank === 'Jack') {
+                    isJackDrawn = true;
+                    clearInterval(flipInterval);
+                    startTime = performance.now();
+                    document.getElementById("react-button").disabled = false;
+                } else {
+                    isJackDrawn = false;
+                }
             } else {
                 document.getElementById("flipped-card").innerHTML = `<p>No more cards left!</p>`;
-                clearInterval(flipInterval); // Stop the card flipping interval if no cards are left
+                clearInterval(flipInterval);
             }
         })
         .catch(error => {
@@ -110,33 +90,91 @@ function flipCard() {
         });
 }
 
-// React to Jack function (when player presses React)
+document.querySelector('.card').addEventListener('click', function() {
+    reactToJack(); // React to the Jack when the card is clicked
+});
+
+// Function when a Jack is present
 function reactToJack() {
+    const reactBtn = document.getElementById("react-button");
+
+    if (reactionsRemaining <= 0) {
+        document.getElementById("reaction-info").style.display = "none";
+        alert("No reactions remaining! You cannot react anymore.");
+        clearInterval(flipInterval); // Ensure the flipping stops
+        console.log("Calling showReactionTimes", reactionsRemaining);
+        showReactionTimes(); // Show reaction times
+        return;
+    }
+
     if (isJackDrawn) {
         reactionTime = performance.now() - startTime;
         alert(`Your reaction time: ${reactionTime.toFixed(2)} ms\nYou reacted correctly!`);
-        isJackDrawn = false; // Reset after the correct reaction
+        reactionTimes.push(reactionTime.toFixed(2)); // Save to local array
+        reactionsRemaining--; // Decrement reactions remaining
+
+        console.log("Reactions remaining after correct reaction:", reactionsRemaining); // Debugging line
+
+        isJackDrawn = false;
+        if (reactionsRemaining > 0) {
+            flipInterval = setInterval(flipCard, 1250); // Continue flipping if reactions left
+        }
+        // No 'else' here for stopping, we handle it after the decrement
+
+        fetch(`/save_reaction_time/${playerName}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ reaction_time: reactionTime })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log("Saved reaction time:", data);
+        })
+        .catch(error => {
+            console.error("Error saving reaction time:", error);
+        });
     } else {
         alert("Incorrect reaction! You didn't react to a Jack.");
+
+
+        console.log("Reactions remaining after incorrect reaction:", reactionsRemaining); // Debugging line
     }
 
+    // Update remaining reactions display
+    document.getElementById("reactions-remaining").innerText = reactionsRemaining;
 
+    // Check if all reactions are used *after* decrementing
+    if (reactionsRemaining <= 0) {
+        document.getElementById("reaction-info").style.display = "none";
+        clearInterval(flipInterval); // Ensure the flipping stops
+        console.log("Calling showReactionTimes", reactionsRemaining);
+        showReactionTimes(); // Show reaction times
+        alert("You've used all your reactions!");
+    }
 }
 
-// Update the remaining deck visual
-function updateRemainingDeck(remainingDeckCount) {
-    console.log("Updating remaining deck with count:", remainingDeckCount);
+// Function to show reaction times
+function showReactionTimes() {
+    console.log("Calling showReactionTimes", reactionsRemaining);
 
-    const remainingCardsElement = document.getElementById("remaining-deck");
-    remainingCardsElement.innerHTML = '';
+    const container = document.getElementById("reaction-times-list");
+    container.innerHTML = ""; // Clear existing, if any
 
-    const remainingCard = document.createElement("div");
-    remainingCard.classList.add("card");
-    remainingCard.innerHTML = `
-        <div style="font-size: 48px; text-align: center;">
-            <span>${remainingDeckCount}</span>
+    reactionTimes.forEach((time, index) => {
+        const li = document.createElement("li");
+        li.textContent = `Reaction ${index + 1}: ${time} ms`;
+        container.appendChild(li);
+    });
+
+    // Display the reaction times container
+    document.getElementById("reaction-times-container").style.display = "block"; // Ensure it's visible
+}
+
+function updateRemainingDeck(count) {
+    const container = document.getElementById("remaining-deck");
+    container.innerHTML = `
+        <div class="card" style="font-size: 48px; text-align: center;">
+            <span>${count}</span>
         </div>
     `;
-
-    remainingCardsElement.appendChild(remainingCard);
 }

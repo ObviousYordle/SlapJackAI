@@ -9,39 +9,56 @@
 <body>
     <h1>Slapjack Game</h1>
 
-    <div>
+    <!-- Player Entry -->
+    <div id="player-entry">
         <label for="player-name">Enter Player Name:</label>
         <input type="text" id="player-name" placeholder="Enter name">
         <button id="add-player-button" onclick="addPlayer()">Add Player</button>
     </div>
 
-    <div id="player-info"></div> <!-- Player name and deck -->
+    <!-- Player Info -->
+    <div id="player-info"></div>
 
-    <!-- Card container to show card -->
-    <div id="card-container" class="card-container" style="display:none;">
+    <!-- Card Display -->
+    <div id="card-container" class="card-container" style="display: none;">
         <div class="card">
-            <!-- Front face of the card -->
             <div class="card-face front">
-                <div class="card-rank" id="card-rank">Card Front</div>  <!-- Card rank (number) -->
-                <div class="card-suit" id="card-suit"></div>  <!-- Card suit (Spades/Clubs/Diamonds/Hearts -->
+                <div class="card-rank" id="card-rank">Card Front</div>
+                <div class="card-suit" id="card-suit"></div>
             </div>
         </div>
     </div>
 
-    <!-- Start Button -->
-    <button id="start-button" onclick="startFlipping()" style="display:none;">Start Flipping</button>
 
-    <!-- React Button (Initially hidden) -->
-    <button id="react-button" onclick="reactToJack()" style="display:none;">React!</button>
+    <div id="reaction-instruction" style="display: none;">
+        <p>We need to record your first 10 reactions to adjust the AI's difficulty to your skill level.</p>
+        <p>Once you start, you can then click on the card when you sees a Jack, your reaction time will be recorded.</p>
+    </div>
 
-    <!-- Display flipped card and remaining cards -->
+    <!-- Game Buttons -->
+    <button id="start-button" onclick="startFlipping()" style="display: none;">Start Flipping</button>
+
+    <!-- Flipped Card -->
     <div id="flipped-card"></div>
-    <div id="deck-visual" style="display:none;">
+
+    <!-- Deck Display -->
+    <div id="deck-visual" style="display: none;">
         <h3>Remaining Deck</h3>
-        <div id="remaining-deck"></div> <!-- This will display the visual number of remaining cards -->
+        <div id="remaining-deck"></div>
+    </div>
+
+    <div id="reaction-info" style="display: none;">
+        <strong>Reactions Remaining:</strong> <span id="reactions-remaining">10</span>
+    </div>
+
+    <!-- Reaction Times -->
+    <div id="reaction-times-container" style="display: none;">
+        <h3>Your Reaction Times:</h3>
+        <ul id="reaction-times-list"></ul>
     </div>
 
 
+    <!-- JavaScript -->
     <script src="script.js"></script>
 </body>
 </html>

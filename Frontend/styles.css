@@ -1,167 +1,261 @@
+/* General Body Styles */
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Roboto', sans-serif;
     text-align: center;
-    background-color: #f0f0f0;
+    background-color: #fafafa;
+    margin: 0;
     padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-image: linear-gradient(45deg, #f0f0f0, #e0e0e0);
 }
 
+/* Main Title */
+h1 {
+    font-size: 3.5rem;
+    color: #333;
+    font-weight: 700;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+/* Paragraph description */
+p {
+    font-size: 1.2rem;
+    color: #666;
+    max-width: 700px;
+    margin-bottom: 30px;
+    line-height: 1.6;
+}
+
+/* Button Styling */
+.button {
+    display: inline-block;
+    padding: 16px 32px;
+    font-size: 1.4rem;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    margin: 15px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.button:hover {
+    background-color: #45a049;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
+}
+
+.button:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Button specific enhancements */
+#play-button {
+    background-color: #4CAF50;
+}
+
+#rules-button {
+    background-color: #2196F3;
+}
+
+#play-button:hover {
+    background-color: #45a049;
+}
+
+#rules-button:hover {
+    background-color: #1e88e5;
+}
+
+/* Button Hover Effects */
+.button:focus {
+    outline: none;
+}
+
+/* Card Container */
 .card-container {
-    margin: 20px auto;
-    width: 150px;
-    height: 200px;
-    perspective: 1000px; /* Keep perspective for 3D effect */
+    margin-top: 30px;
+    width: 250px;
+    height: 350px;
+    perspective: 1200px;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
+/* Card Style */
 .card {
     width: 100%;
     height: 100%;
     background-color: white;
-    border: 2px solid #000;
+    border: 3px solid #000;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 24px;
+    font-size: 48px;
     font-weight: bold;
-    border-radius: 10px; /* Rounded corners */
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5); /* Shadow for a more realistic look */
+    border-radius: 16px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.6);
     position: relative;
+    cursor: pointer; /* Make the card clickable */
 }
 
+/* Card hover effect */
+.card:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* Card front face */
 .card-face {
     position: absolute;
     width: 100%;
     height: 100%;
-    backface-visibility: hidden; /* Hide the back face during flip */
+    backface-visibility: hidden;
 }
 
+/* Text on card */
 .front {
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 32px;
+    font-size: 40px;
     flex-direction: column;
 }
 
+/* Rank and Suit Styling */
 .card-rank {
-    font-size: 48px; /* Larger rank size */
+    font-size: 72px;
     font-weight: bold;
-    color: #333; /* Default color for rank */
+    color: #333;
 }
 
 .card-suit {
-    font-size: 24px; /* Smaller suit size */
-    color: #333; /* Default color for suit */
+    font-size: 40px;
+    color: #333;
 }
 
 .card-suit.red {
-    color: red; /* Red for hearts and diamonds */
+    color: red;
 }
 
 .card-suit.black {
-    color: black; /* Black for clubs and spades */
+    color: black;
 }
 
-#add-player-button{
-    display: inline-block;
-    padding: 5px 5px;
+/* Player and Button Styles */
+#add-player-button,
+#start-button,
+#react-button {
+    padding: 12px 30px;
     font-size: 16px;
-    background-color: #4CAF50; /* Green background */
-    color: white;
-    border: none;
-    border-radius: 8px; /* Rounded corners */
-    cursor: pointer;
-    text-align: center;
-    margin-top: 20px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); /* Soft shadow for depth */
-    transition: background-color 0.3s, transform 0.3s ease, box-shadow 0.3s;
-}
-
-
-/* Active effect (when clicked) */
-#add-player-button:active {
-    transform: scale(1.02); /* Shrink the button a bit when clicked */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Softer shadow on click */
-}
-
-
-/* General button styles for all buttons */
-.button {
-    display: inline-block;
-    padding: 12px 24px;
-    font-size: 16px;
-    background-color: #4CAF50; /* Green background */
+    background-color: #4CAF50;
     color: white;
     border: none;
     border-radius: 8px;
     cursor: pointer;
     text-align: center;
     margin-top: 20px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-    transition: background-color 0.3s, transform 0.3s ease, box-shadow 0.3s;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    width: auto;
 }
 
-/* Hover effects for buttons */
-.button:hover {
-    background-color: #45a049; /* Darker green for play, red for rules on hover */
-    transform: scale(1.05);
-    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
-}
-
-/* Active effects for buttons */
-.button:active {
+#add-player-button:active,
+#start-button:active,
+#react-button:active {
     transform: scale(1.02);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
-
-
-
-/* Styling for the Start, Add Player, and React Buttons */
-#start-button, #react-button {
-    display: inline-block;
-    padding: 12px 24px;
-    font-size: 16px;
-    background-color: #4CAF50; /* Green background */
-    color: white;
-    border: none;
-    border-radius: 8px; /* Rounded corners */
-    cursor: pointer;
-    text-align: center;
-    margin-top: 100px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); /* Soft shadow for depth */
-    transition: background-color 0.3s, transform 0.3s ease, box-shadow 0.3s;
-    position: absolute;
-    top: 50%;  /* Center vertically */
-    left: 50%; /* Center horizontally */
-    transform: translate(-50%, -50%); /* Adjust for exact center */
+/* Button hover effects */
+#start-button:hover,
+#react-button:hover,
+#add-player-button:hover {
+    background-color: #45a049;
+    transform: scale(1.05);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
 }
 
-/* Additional button styles on hover */
-#start-button:hover, #react-button:hover {
-    background-color: #45a049; /* Darker green on hover */
-    transform: translate(-50%, -50%) scale(1.05); /* Slightly enlarge on hover */
-    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3); /* Increase shadow on hover */
-}
-
-
+/* Visual Deck container */
 #deck-visual {
-    margin-top: 20px;
-    width: 150px;
-    height: 200px;
+    margin-top: 30px;
+    width: 160px;
+    height: 220px;
     background-color: #f4f4f4;
-    padding: 10px;
+    padding: 15px;
     border: 1px solid #ccc;
-    border-radius: 10px;
+    border-radius: 12px;
     text-align: center;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5); /* Shadow for a more realistic look */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
 #remaining-cards {
-    margin-top: 10px;
-    font-size: 48px;  /* Large number to represent the remaining cards */
+    font-size: 48px;
     font-weight: bold;
+    margin-top: 10px;
+    color: #333;
 }
 
+/* Reaction Times Display */
+#reaction-times {
+    margin-top: 30px;
+}
+
+#reaction-times-list {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+#reaction-times-list li {
+    margin-bottom: 12px;
+    font-size: 16px;
+    color: #444;
+    font-weight: 500;
+}
+
+#reaction-times-container {
+    display: none;  /* Start with hidden */
+    background-color: #f4f4f4;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+#reaction-instruction {
+    font-size: 18px;
+    font-weight: bold;
+    margin-top: 20px;
+    color: #333;
+    text-align: center;
+}
+
+#reaction-info {
+    position: relative;
+    z-index: 10;  /* Makes sure it appears above other elements */
+    margin-top: 50px;  /* Adjusts the space between the card and the reaction info */
+}
+
+/* Disabled card styling */
+.card.disabled {
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+/* Enhancing text contrast for better readability */
+h1, p {
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.card-container {
+    position: relative;
+    z-index: 1;  /* Ensures card is below the reaction-info */
+}
