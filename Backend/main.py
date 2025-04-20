@@ -1,78 +1,119 @@
-#Fast API Import
+# Fast API Import
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 import os
-
 import time
 from Deck import Deck
 from Player import Player
 from Card import Card
+from pydantic import BaseModel
 
 app = FastAPI()
 
 # Serve static files from the Frontend directory
+# Essentially adds /static to the path, e.g http://localhost:8000/static/whatever_html_here.html
 frontend_path = os.path.join(os.path.dirname(__file__), "..", "Frontend")
-
-# Mount static files (HTML, CSS, JS)
 app.mount("/static", StaticFiles(directory=str(frontend_path)), name="static")
 
-
+# Store players and reaction_times into a dictionary
+# We shouldn't need to store it into a database, just save it for the local run on that session until user quits.
 players = {}
+reaction_times = {}
 
+class ReactionTime(BaseModel):
+    reaction_time: float
 
-# Create player with deck, just testing
+# Create player with deck, bit more Jacks than usual
 @app.get("/create_player/{name}")
 def create_player(name: str):
-    # Create a fresh deck
+    # Create and shuffle a fresh deck
     fresh_deck = Deck()
-
-    # Shuffle the deck to randomize the order
     fresh_deck.shuffle()
 
-    fresh_deck.deck = fresh_deck.deck[:len(fresh_deck.deck) // 2]  # Split deck for the player
+    # Creating custom deck by adding more jacks for initial N reaction test
+    fresh_deck.deck = [card for card in fresh_deck.deck if card.rank != "Jack"]
 
-    jacks = [
+    # Add multiple Jacks to increase testing frequency
+    extra_jacks = [
         Card("Jack", "Hearts"),
         Card("Jack", "Diamonds"),
         Card("Jack", "Clubs"),
         Card("Jack", "Spades")
-    ]
+    ] * 3  # 12 Jacks added for reaction test
 
-    fresh_deck.deck = [card for card in fresh_deck.deck if card.rank != "Jack"]
-    fresh_deck.deck.extend(jacks)
+    fresh_deck.deck.extend(extra_jacks)
     fresh_deck.shuffle()
 
-    # Create the player and assign the shuffled deck
+    # Create player and assign custom deck
     player = Player(name)
     players[name] = player
-
     player.deck = fresh_deck.deck
 
-    return {"player_name": name, "player_deck": str(player), "deck_size": len(player.deck)}
+    # Reset in case of previous names of the same
+    reaction_times[name] = []
 
+    return {
+        "player_name": name,
+        "player_deck": str(player),
+        "deck_size": len(player.deck)
+    }
 
-# Mimic flipping of a card
+# Flip a card with auto refill
 @app.get("/flip_card/{player_name}")
 def flip_card(player_name: str):
-    player = players[player_name]
 
-    if player and player.deck:
-        card_played = player.flip_card()  # This should return a card object or string
-        remaining_deck = len(player.deck)  # Get remaining deck size
-        return {"player": player_name, "card": str(card_played), "remaining_deck": remaining_deck}  # "card" is the key
-    else:
-        return {"message": "No cards left in the deck!"}
+    # Get the players deck
+    player = players.get(player_name)
+
+    if not player:
+        return {"message": f"Player '{player_name}' not found."}
+
+    # If no cards left, refresh with a new deck
+    if not player.deck:
+        fresh_deck = Deck()
+        fresh_deck.shuffle()
+
+        # Refill if the deck runs out
+        fresh_deck.deck = [card for card in fresh_deck.deck if card.rank != "Jack"]
+        extra_jacks = [
+            Card("Jack", "Hearts"),
+            Card("Jack", "Diamonds"),
+            Card("Jack", "Clubs"),
+            Card("Jack", "Spades")
+        ] * 2  # Add 8 Jacks on refill
+
+        fresh_deck.deck.extend(extra_jacks)
+        fresh_deck.shuffle()
+
+        player.deck = fresh_deck.deck
+        print(f"Deck reshuffled for player: {player_name}")
+
+    # Flip the card
+    card_played = player.flip_card()
+    remaining_deck = len(player.deck)
+
+    return {
+        "player": player_name,
+        "card": str(card_played),
+        "remaining_deck": remaining_deck
+    }
+
+# Save reaction time for a player
+@app.post("/save_reaction_time/{player_name}")
+def save_reaction_time(player_name: str, reaction_time: ReactionTime):
+
+    # If player is not in the reaction time, add that player to the reaction times dictionary
+    if player_name not in reaction_times:
+        reaction_times[player_name] = []
+
+    reaction_times[player_name].append(reaction_time.reaction_time)
+    print(f"Reaction times for {player_name}: {reaction_times[player_name]}")  # Log to check
+
+    return {"message": "Main: Reaction time saved", "reaction_times": reaction_times[player_name]}
 
 
-
-
-
-origins = [
-    "https://localhost:8000"
-]
-
-# With this, in terminal, just run "python .\main.py"
-# Also open http://localhost:8000/static/index.html
+# Remember to run python .\main.py in the backend directory to run the server.
+# Then open the http://localhost:8000/static/home.html
 if __name__ == "__main__":
     uvicorn.run(app, host="localhost", port=8000)

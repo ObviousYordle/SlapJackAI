@@ -5,6 +5,7 @@ class Player:
         self.name = name
         self.deck = []
         self.score = 0
+        self.reaction_times = []  # Add this to track reaction times
 
     """Add card to player deck,"""
     def add_card(self, card):
