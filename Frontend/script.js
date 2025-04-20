@@ -6,7 +6,7 @@ let reactionTime = 0;
 let flipInterval;
 let isJackDrawn = false;
 let reactionTimes = [];
-let reactionsRemaining = 5;  // Can adjust number of reactions here
+let reactionsRemaining = 2;  // Can adjust number of reactions here
 
 // Add player
 function addPlayer() {
@@ -17,6 +17,7 @@ function addPlayer() {
         return;
     }
 
+    // calls /create_player to FastAPI main.py
     fetch(`/create_player/${playerName}`)
         .then(response => response.json())
         .then(data => {
@@ -57,11 +58,14 @@ function flipCard() {
         .then(response => response.json())
         .then(data => {
             if (data.card) {
+
+                // Parse through deck to better visualize the card
                 const [rank, suit] = data.card.split(" of ");
                 document.getElementById("card-rank").innerText = rank;
                 const suitElem = document.getElementById("card-suit");
                 suitElem.innerText = suit;
 
+                // Adjust styling if a card is a certain type, e.g Hearts/Diamonds is red
                 if (suit === 'Hearts' || suit === 'Diamonds') {
                     suitElem.classList.add('red');
                     suitElem.classList.remove('black');
@@ -70,26 +74,37 @@ function flipCard() {
                     suitElem.classList.remove('red');
                 }
 
+                // Flip a card
                 updateRemainingDeck(data.remaining_deck);
 
+                // If the card is a Jack, stop the timer, and start the reaction timer. reactToJack() will handle the reaction time itself.
                 if (rank === 'Jack') {
                     isJackDrawn = true;
                     clearInterval(flipInterval);
                     startTime = performance.now();
                     document.getElementById("react-button").disabled = false;
-                } else {
+                }
+
+                // Otherwise if it wasn't a Jack, continue as normal
+                else {
                     isJackDrawn = false;
                 }
-            } else {
+            }
+
+            // This runs once there are no more cards in the deck
+            else {
                 document.getElementById("flipped-card").innerHTML = `<p>No more cards left!</p>`;
                 clearInterval(flipInterval);
             }
         })
+
+        // Error catching
         .catch(error => {
             console.error("Error:", error);
         });
 }
 
+// This makes the card interactable, you can click on it to "Slap"
 document.querySelector('.card').addEventListener('click', function() {
     reactToJack(); // React to the Jack when the card is clicked
 });
@@ -98,6 +113,7 @@ document.querySelector('.card').addEventListener('click', function() {
 function reactToJack() {
     const reactBtn = document.getElementById("react-button");
 
+    // If there are no more reactions remaining, halt them from reacting
     if (reactionsRemaining <= 0) {
         document.getElementById("reaction-info").style.display = "none";
         alert("No reactions remaining! You cannot react anymore.");
@@ -107,6 +123,7 @@ function reactToJack() {
         return;
     }
 
+    // If isJackDrawn is true, get the reaction performance
     if (isJackDrawn) {
         reactionTime = performance.now() - startTime;
         alert(`Your reaction time: ${reactionTime.toFixed(2)} ms\nYou reacted correctly!`);
@@ -116,11 +133,14 @@ function reactToJack() {
         console.log("Reactions remaining after correct reaction:", reactionsRemaining); // Debugging line
 
         isJackDrawn = false;
+
+        // Continue flipping if there are still reactions remaining
         if (reactionsRemaining > 0) {
             flipInterval = setInterval(flipCard, 1250); // Continue flipping if reactions left
         }
         // No 'else' here for stopping, we handle it after the decrement
 
+        // Update the player's reaction time in their own player dictionary, saved to FastAPI
         fetch(`/save_reaction_time/${playerName}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -133,17 +153,18 @@ function reactToJack() {
         .catch(error => {
             console.error("Error saving reaction time:", error);
         });
-    } else {
+    }
+    // If it is not a Jack when you slap, you will get an invalid slap
+    else {
+        // Don't do anything if they fail the slap
         alert("Incorrect reaction! You didn't react to a Jack.");
-
-
         console.log("Reactions remaining after incorrect reaction:", reactionsRemaining); // Debugging line
     }
 
     // Update remaining reactions display
     document.getElementById("reactions-remaining").innerText = reactionsRemaining;
 
-    // Check if all reactions are used *after* decrementing
+    // Check if all reactions are used after decrementing
     if (reactionsRemaining <= 0) {
         document.getElementById("reaction-info").style.display = "none";
         clearInterval(flipInterval); // Ensure the flipping stops
@@ -160,6 +181,7 @@ function showReactionTimes() {
     const container = document.getElementById("reaction-times-list");
     container.innerHTML = ""; // Clear existing, if any
 
+    // Lists out all the reactions from the player
     reactionTimes.forEach((time, index) => {
         const li = document.createElement("li");
         li.textContent = `Reaction ${index + 1}: ${time} ms`;

@@ -12,9 +12,12 @@ from pydantic import BaseModel
 app = FastAPI()
 
 # Serve static files from the Frontend directory
+# Essentially adds /static to the path, e.g http://localhost:8000/static/whatever_html_here.html
 frontend_path = os.path.join(os.path.dirname(__file__), "..", "Frontend")
 app.mount("/static", StaticFiles(directory=str(frontend_path)), name="static")
 
+# Store players and reaction_times into a dictionary
+# We shouldn't need to store it into a database, just save it for the local run on that session until user quits.
 players = {}
 reaction_times = {}
 
@@ -28,7 +31,7 @@ def create_player(name: str):
     fresh_deck = Deck()
     fresh_deck.shuffle()
 
-    # Remove original Jacks to avoid duplication
+    # Creating custom deck by adding more jacks for initial N reaction test
     fresh_deck.deck = [card for card in fresh_deck.deck if card.rank != "Jack"]
 
     # Add multiple Jacks to increase testing frequency
@@ -37,7 +40,7 @@ def create_player(name: str):
         Card("Jack", "Diamonds"),
         Card("Jack", "Clubs"),
         Card("Jack", "Spades")
-    ] * 3  # 12 Jacks total
+    ] * 3  # 12 Jacks added for reaction test
 
     fresh_deck.deck.extend(extra_jacks)
     fresh_deck.shuffle()
@@ -46,6 +49,9 @@ def create_player(name: str):
     player = Player(name)
     players[name] = player
     player.deck = fresh_deck.deck
+
+    # Reset in case of previous names of the same
+    reaction_times[name] = []
 
     return {
         "player_name": name,
@@ -56,6 +62,8 @@ def create_player(name: str):
 # Flip a card with auto refill
 @app.get("/flip_card/{player_name}")
 def flip_card(player_name: str):
+
+    # Get the players deck
     player = players.get(player_name)
 
     if not player:
@@ -66,6 +74,7 @@ def flip_card(player_name: str):
         fresh_deck = Deck()
         fresh_deck.shuffle()
 
+        # Refill if the deck runs out
         fresh_deck.deck = [card for card in fresh_deck.deck if card.rank != "Jack"]
         extra_jacks = [
             Card("Jack", "Hearts"),
@@ -93,14 +102,18 @@ def flip_card(player_name: str):
 # Save reaction time for a player
 @app.post("/save_reaction_time/{player_name}")
 def save_reaction_time(player_name: str, reaction_time: ReactionTime):
+
+    # If player is not in the reaction time, add that player to the reaction times dictionary
     if player_name not in reaction_times:
         reaction_times[player_name] = []
 
     reaction_times[player_name].append(reaction_time.reaction_time)
     print(f"Reaction times for {player_name}: {reaction_times[player_name]}")  # Log to check
 
-    return {"message": "Reaction time saved", "reaction_times": reaction_times[player_name]}
+    return {"message": "Main: Reaction time saved", "reaction_times": reaction_times[player_name]}
 
 
+# Remember to run python .\main.py in the backend directory to run the server.
+# Then open the http://localhost:8000/static/home.html
 if __name__ == "__main__":
     uvicorn.run(app, host="localhost", port=8000)
