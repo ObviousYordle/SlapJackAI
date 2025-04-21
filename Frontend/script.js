@@ -61,20 +61,17 @@ function flipCard() {
 
                 // Parse through deck to better visualize the card
                 const [rank, suit] = data.card.split(" of ");
-                document.getElementById("card-rank").innerText = rank;
-                const suitElem = document.getElementById("card-suit");
-                suitElem.innerText = suit;
+                const cardRank = rank.toLowerCase();
+                const cardSuit = suit.toLowerCase();
 
-                // Adjust styling if a card is a certain type, e.g Hearts/Diamonds is red
-                if (suit === 'Hearts' || suit === 'Diamonds') {
-                    suitElem.classList.add('red');
-                    suitElem.classList.remove('black');
-                } else {
-                    suitElem.classList.add('black');
-                    suitElem.classList.remove('red');
-                }
+                const filename = `${cardRank}_of_${cardSuit}.png`;
+                const imagePath = `PNG-cards-1.3/${filename}`;
 
-                // Flip a card
+                
+                const cardImage = document.getElementById("card-image");
+                cardImage.src = imagePath;
+                cardImage.alt = data.card;
+
                 updateRemainingDeck(data.remaining_deck);
 
                 // If the card is a Jack, stop the timer, and start the reaction timer. reactToJack() will handle the reaction time itself.
