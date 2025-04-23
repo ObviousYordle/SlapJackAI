@@ -4,6 +4,10 @@ from fastapi.staticfiles import StaticFiles
 import uvicorn
 import os
 import time
+import joblib
+import numpy as np
+from typing import List
+
 from Deck import Deck
 from Player import Player
 from Card import Card
@@ -16,6 +20,10 @@ app = FastAPI()
 frontend_path = os.path.join(os.path.dirname(__file__), "..", "Frontend")
 app.mount("/static", StaticFiles(directory=str(frontend_path)), name="static")
 
+#Get the path to where the pre trained AI model for reaction time is stored and load it in order to use the model on predicting its reaction speed based on the user's times.
+AImodel_path = os.path.join(os.path.dirname(__file__), "..", "AIModel", "reaction_time_model.pkl")
+model = joblib.load(AImodel_path)
+
 # Store players and reaction_times into a dictionary
 # We shouldn't need to store it into a database, just save it for the local run on that session until user quits.
 players = {}
@@ -23,6 +31,10 @@ reaction_times = {}
 
 class ReactionTime(BaseModel):
     reaction_time: float
+
+class ReactionData(BaseModel):
+    reaction_times: List[float]
+
 
 # Create player with deck, bit more Jacks than usual
 @app.get("/create_player/{name}")
@@ -112,7 +124,15 @@ def save_reaction_time(player_name: str, reaction_time: ReactionTime):
 
     return {"message": "Main: Reaction time saved", "reaction_times": reaction_times[player_name]}
 
+@app.post("/predict_performance")
+def predict_performance(data: ReactionData):
+    input_array = np.array(data.reaction_times).reshape(1, -1)
 
+    try:
+        prediction = model.predict(input_array)
+        return {"prediction": prediction[0]}
+    except Exception as e:
+        return {"error": str(e)}
 # Remember to run python .\main.py in the backend directory to run the server.
 # Then open the http://localhost:8000/static/home.html
 if __name__ == "__main__":

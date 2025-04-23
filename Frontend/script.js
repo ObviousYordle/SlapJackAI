@@ -6,7 +6,7 @@ let reactionTime = 0;
 let flipInterval;
 let isJackDrawn = false;
 let reactionTimes = [];
-let reactionsRemaining = 2;  // Can adjust number of reactions here
+let reactionsRemaining = 10;  // Can adjust number of reactions here
 
 // Add player
 function addPlayer() {
@@ -168,6 +168,30 @@ function reactToJack() {
         console.log("Calling showReactionTimes", reactionsRemaining);
         showReactionTimes(); // Show reaction times
         alert("You've used all your reactions!");
+
+        fetch("/predict_performance", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                reaction_times: reactionTimes.map(parseFloat) 
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            const prediction = data.prediction;
+            console.log("AI Prediction:", prediction);
+    
+            if (prediction !== undefined) {
+                document.getElementById("ai-prediction").innerText = `AI Reaction Speed: ${prediction.toFixed(2)} ms`;
+            } else {
+                document.getElementById("ai-prediction").innerText = `AI Prediction: Error`;
+            }
+        })
+        .catch(error => {
+            console.error("Prediction error:", error);
+        });
     }
 }
 
