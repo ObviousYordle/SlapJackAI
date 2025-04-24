@@ -81,6 +81,10 @@ p {
     outline: none;
 }
 
+.hidden {
+    display: none;
+}
+
 /* Card Container */
 .card-container {
     margin-top: 30px;

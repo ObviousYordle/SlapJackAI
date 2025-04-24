@@ -6,7 +6,7 @@ let reactionTime = 0;
 let flipInterval;
 let isJackDrawn = false;
 let reactionTimes = [];
-let reactionsRemaining = 10;  // Can adjust number of reactions here
+let reactionsRemaining = 1;  // Can adjust number of reactions here
 
 // Add player
 function addPlayer() {
@@ -166,6 +166,7 @@ function reactToJack() {
         document.getElementById("reaction-info").style.display = "none";
         clearInterval(flipInterval); // Ensure the flipping stops
         console.log("Calling showReactionTimes", reactionsRemaining);
+        document.getElementById("Start-Game-button").style.display = "block";
         showReactionTimes(); // Show reaction times
         alert("You've used all your reactions!");
 
