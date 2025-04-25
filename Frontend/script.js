@@ -7,6 +7,8 @@ let flipInterval;
 let isJackDrawn = false;
 let reactionTimes = [];
 let reactionsRemaining = 1;  // Can adjust number of reactions here
+let playerHand = [];
+let aiHand = [];
 
 // Add player
 function addPlayer() {
@@ -30,9 +32,9 @@ function addPlayer() {
             // Show game elements
             document.getElementById("card-container").style.display = "block";
             document.getElementById("start-button").style.display = "block";
-            document.getElementById("reaction-instruction").style.display = "block";  // Show the instruction
-            document.getElementById("reaction-info").style.display = "block";  // Show the instruction
-            document.getElementById("reactions-remaining").innerText = reactionsRemaining; // Display remaining reactions
+            document.getElementById("reaction-instruction").style.display = "block";  
+            document.getElementById("reaction-info").style.display = "block";  
+            document.getElementById("reactions-remaining").innerText = reactionsRemaining; 
         })
         .catch(error => {
             console.error("Error:", error);
@@ -43,7 +45,7 @@ function addPlayer() {
 function startFlipping() {
     flipInterval = setInterval(flipCard, 1250);
     document.getElementById("start-button").style.display = "none";
-    document.getElementById("reaction-instruction").style.display = "none";  // Hide instruction
+    document.getElementById("reaction-instruction").style.display = "none";  
     document.getElementById("react-button").style.display = "block";
     document.getElementById("reaction-info").style.display = "block";
 
@@ -102,9 +104,14 @@ function flipCard() {
 }
 
 // This makes the card interactable, you can click on it to "Slap"
-document.querySelector('.card').addEventListener('click', function() {
-    reactToJack(); // React to the Jack when the card is clicked
-});
+document.addEventListener('DOMContentLoaded', function () {
+    const card = document.querySelector('.card');
+    if (card) {
+      card.addEventListener('click', function () {
+        reactToJack(); // React to the Jack when the card is clicked
+      });
+    }
+  });
 
 // Function when a Jack is present
 function reactToJack() {
@@ -170,6 +177,7 @@ function reactToJack() {
         showReactionTimes(); // Show reaction times
         alert("You've used all your reactions!");
 
+        //Send the reaction times to the backend so that the pre trained reaction_time_model can predict the performance after converting those times into float values since that's what the AI is expecting
         fetch("/predict_performance", {
             method: "POST",
             headers: {
@@ -183,7 +191,8 @@ function reactToJack() {
         .then(data => {
             const prediction = data.prediction;
             console.log("AI Prediction:", prediction);
-    
+            
+            //Display the prediction time based on the player's initial reaction time test
             if (prediction !== undefined) {
                 document.getElementById("ai-prediction").innerText = `AI Reaction Speed: ${prediction.toFixed(2)} ms`;
             } else {
@@ -211,7 +220,7 @@ function showReactionTimes() {
     });
 
     // Display the reaction times container
-    document.getElementById("reaction-times-container").style.display = "block"; // Ensure it's visible
+    document.getElementById("reaction-times-container").style.display = "block"; 
 }
 
 function updateRemainingDeck(count) {
@@ -222,3 +231,32 @@ function updateRemainingDeck(count) {
         </div>
     `;
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+    const centerCard = document.getElementById("center-card");
+  
+    centerCard.addEventListener("click", () => {
+      const playerName = "Player1"; 
+  
+      fetch(`/initialize_game/${playerName}`)
+        .then(response => response.json())
+        .then(data => {
+            //Hide the middle deck after shuffling and display the player and ai decks
+            document.getElementById("center-card").style.display = "none";
+            document.getElementById("shuffle-instruction").style.display = "none";
+            document.getElementById("player-deck").style.display = "inline";
+            document.getElementById("ai-deck").style.display = "inline";
+            
+            playerHand = data.player_deck;
+            aiHand = data.ai_deck;
+            
+            //Just to make sure that both player's annd ai's decks have 26 cards that are unique and no duplicate
+            console.log("Player hand:", playerHand.map(c => c.name));
+            console.log("AI hand:", aiHand.map(c => c.name));
+  
+        })
+        .catch(error => {
+            console.error(error);
+        });
+    });
+  });

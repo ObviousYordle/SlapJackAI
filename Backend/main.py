@@ -6,7 +6,7 @@ import os
 import time
 import joblib
 import numpy as np
-from typing import List
+from typing import List, Dict
 
 from Deck import Deck
 from Player import Player
@@ -24,9 +24,10 @@ app.mount("/static", StaticFiles(directory=str(frontend_path)), name="static")
 AImodel_path = os.path.join(os.path.dirname(__file__), "..", "AIModel", "reaction_time_model.pkl")
 model = joblib.load(AImodel_path)
 
-# Store players and reaction_times into a dictionary
+# Store players and reaction_times and ai deck into a dictionary
 # We shouldn't need to store it into a database, just save it for the local run on that session until user quits.
 players = {}
+ai_decks: Dict[str, List[Card]] = {}
 reaction_times = {}
 
 class ReactionTime(BaseModel):
@@ -35,7 +36,31 @@ class ReactionTime(BaseModel):
 class ReactionData(BaseModel):
     reaction_times: List[float]
 
+#Initialize the game by shuffling the deck to ensure that it is randomize each game
+@app.get("/initialize_game/{player_name}")
+def initialize_game(player_name: str):
+    fresh_deck = Deck()
+    fresh_deck.shuffle()
+    #Spite the deck so that the player deck and ai deck has 26 unique cards
+    player_deck, ai_deck = fresh_deck.split_deck()
 
+    player = Player(player_name)
+    player.deck = player_deck
+    players[player_name] = player
+    ai_decks[player_name] = ai_deck
+
+    #Conver the card into readable dictionary format and return both the player's and ai decks as a list of the dictionary 
+    #where each card has a card name and image path in order the frontend to render the corresponding images
+    def card_to_dict(card):
+        return {
+            "name": str(card),
+            "image": card.get_imageFileName()
+        }
+
+    return {
+        "player_deck": [card_to_dict(card) for card in player_deck],
+        "ai_deck": [card_to_dict(card) for card in ai_deck]
+}
 # Create player with deck, bit more Jacks than usual
 @app.get("/create_player/{name}")
 def create_player(name: str):
