@@ -9,6 +9,7 @@ let reactionTimes = [];
 let reactionsRemaining = 1;  // Can adjust number of reactions here
 let playerHand = [];
 let aiHand = [];
+let centerCardPile = []; // Holds cards placed in the center
 
 // Add player
 function addPlayer() {
@@ -236,7 +237,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const centerCard = document.getElementById("center-card");
   
     centerCard.addEventListener("click", () => {
-      const playerName = "Player1"; 
+
+        //im not sure but i have to declear a const playername here fort he game to load the cards, if possible could David could you look into this 
+        const playerName = "player"; 
   
       fetch(`/initialize_game/${playerName}`)
         .then(response => response.json())
@@ -251,6 +254,7 @@ document.addEventListener("DOMContentLoaded", () => {
             aiHand = data.ai_deck;
             
             //Just to make sure that both player's annd ai's decks have 26 cards that are unique and no duplicate
+            //Should delete this when the actual game is played so the player cant just inspect the page and see the cards but for now just leave it so i can see that the correct cards are being played
             console.log("Player hand:", playerHand.map(c => c.name));
             console.log("AI hand:", aiHand.map(c => c.name));
   
@@ -258,5 +262,41 @@ document.addEventListener("DOMContentLoaded", () => {
         .catch(error => {
             console.error(error);
         });
-    });
-  });
+    }, { once: true });
+});
+document.getElementById("player-deck").addEventListener("click", () => {
+    if (playerHand.length === 0) return;
+
+    // Take top card in the player's deck and display it in the center
+    const playerCard = playerHand.shift();
+    //checking to make sure that the card the player played is the card in their deck by order.
+    console.log("Player card image:", playerCard.image);
+
+    
+    const centerCard = document.getElementById("center-card");
+    centerCard.style.display = "inline"; 
+    centerCard.src = playerCard.image;
+
+
+
+    // When the ai is playing, disable the click on he player's deck so the user can't spam their deck
+    document.getElementById("player-deck").style.pointerEvents = "none";
+
+    // A random amount of time it take for the ai to place its card down instead of havign a set time which might make it feel a little robotic and more predictable
+    const delay = Math.random() * 2000 + 1000; 
+
+    //currently having issues with this where the cards from the ai's deck doesn't show up (check console when you play)
+    setTimeout(() => {
+        fetch(`/ai_flip_card/${playerName}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.image) {
+                    document.getElementById("center-card").src = data.image;
+
+                }
+
+                // After the ai finish placing the card down, allow the user to click again.
+                document.getElementById("player-deck").style.pointerEvents = "auto";
+            });
+    }, delay);
+});

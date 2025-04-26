@@ -20,6 +20,8 @@ app = FastAPI()
 frontend_path = os.path.join(os.path.dirname(__file__), "..", "Frontend")
 app.mount("/static", StaticFiles(directory=str(frontend_path)), name="static")
 
+app.mount("/cards", StaticFiles(directory="../Frontend/PNG-cards-1.3"), name="cards")
+
 #Get the path to where the pre trained AI model for reaction time is stored and load it in order to use the model on predicting its reaction speed based on the user's times.
 AImodel_path = os.path.join(os.path.dirname(__file__), "..", "AIModel", "reaction_time_model.pkl")
 model = joblib.load(AImodel_path)
@@ -94,6 +96,20 @@ def create_player(name: str):
         "player_name": name,
         "player_deck": str(player),
         "deck_size": len(player.deck)
+    }
+
+#note for david: This is causing the problem so the images cant be display in the game. I made this in a hurry since im leaving and dont have time to fully check but u should look over this
+@app.get("/ai_flip_card/{player_name}")
+def ai_flip_card(player_name: str):
+    if player_name not in ai_decks or not ai_decks[player_name]:
+        return {"error": "AI has no cards left!"}
+    
+    # Pop the top card from the AI's deck               
+    ai_card = ai_decks[player_name].pop(0)
+
+    return {
+        "name": str(ai_card),
+        "image": ai_card.get_imageFileName()
     }
 
 # Flip a card with auto refill
