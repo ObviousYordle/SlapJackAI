@@ -14,6 +14,7 @@ let centerCardPile = []; // Holds cards placed in the center
 // Add player
 function addPlayer() {
     playerName = document.getElementById("player-name").value;
+    localStorage.setItem("playerName", playerName); // Store it for future use
 
     if (!playerName) {
         alert("Please enter a player name.");
@@ -177,6 +178,7 @@ function reactToJack() {
         document.getElementById("Start-Game-button").style.display = "block";
         showReactionTimes(); // Show reaction times
         alert("You've used all your reactions!");
+        console.log(playerName)
 
         //Send the reaction times to the backend so that the pre trained reaction_time_model can predict the performance after converting those times into float values since that's what the AI is expecting
         fetch("/predict_performance", {
@@ -233,13 +235,18 @@ function updateRemainingDeck(count) {
     `;
 }
 
+
+// Game code below?
+
 document.addEventListener("DOMContentLoaded", () => {
     const centerCard = document.getElementById("center-card");
   
     centerCard.addEventListener("click", () => {
 
-        //im not sure but i have to declear a const playername here fort he game to load the cards, if possible could David could you look into this 
-        const playerName = "player"; 
+        //im not sure but i have to declear a const playername here fort he game to load the cards, if possible could David could you look into this
+
+        playerName = "Player";
+
   
       fetch(`/initialize_game/${playerName}`)
         .then(response => response.json())

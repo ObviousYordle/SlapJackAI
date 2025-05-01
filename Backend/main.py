@@ -41,6 +41,8 @@ class ReactionData(BaseModel):
 #Initialize the game by shuffling the deck to ensure that it is randomize each game
 @app.get("/initialize_game/{player_name}")
 def initialize_game(player_name: str):
+
+    print(f"Hell0{players}")
     fresh_deck = Deck()
     fresh_deck.shuffle()
     #Spite the deck so that the player deck and ai deck has 26 unique cards
@@ -67,6 +69,10 @@ def initialize_game(player_name: str):
 @app.get("/create_player/{name}")
 def create_player(name: str):
     # Create and shuffle a fresh deck
+
+    # Assume one player, just clear it when you make a new player
+    players.clear()
+
     fresh_deck = Deck()
     fresh_deck.shuffle()
 
@@ -164,6 +170,7 @@ def save_reaction_time(player_name: str, reaction_time: ReactionTime):
     print(f"Reaction times for {player_name}: {reaction_times[player_name]}")  # Log to check
 
     return {"message": "Main: Reaction time saved", "reaction_times": reaction_times[player_name]}
+
 
 @app.post("/predict_performance")
 def predict_performance(data: ReactionData):
