@@ -12,6 +12,8 @@ from Deck import Deck
 from Player import Player
 from Card import Card
 from pydantic import BaseModel
+from AiPlayer import AiPlayer
+
 
 app = FastAPI()
 
@@ -22,14 +24,12 @@ app.mount("/static", StaticFiles(directory=str(frontend_path)), name="static")
 
 app.mount("/cards", StaticFiles(directory="../Frontend/PNG-cards-1.3"), name="cards")
 
-#Get the path to where the pre trained AI model for reaction time is stored and load it in order to use the model on predicting its reaction speed based on the user's times.
-AImodel_path = os.path.join(os.path.dirname(__file__), "..", "AIModel", "reaction_time_model.pkl")
-model = joblib.load(AImodel_path)
 
 # Store players and reaction_times and ai deck into a dictionary
 # We shouldn't need to store it into a database, just save it for the local run on that session until user quits.
 players = {}
 ai_decks: Dict[str, List[Card]] = {}
+center_pile: List[Card] = []
 reaction_times = {}
 
 class ReactionTime(BaseModel):
@@ -52,6 +52,7 @@ def initialize_game(player_name: str):
     player.deck = player_deck
     players[player_name] = player
     ai_decks[player_name] = ai_deck
+    center_pile.clear()
 
     #Conver the card into readable dictionary format and return both the player's and ai decks as a list of the dictionary 
     #where each card has a card name and image path in order the frontend to render the corresponding images
@@ -112,10 +113,12 @@ def ai_flip_card(player_name: str):
     
     # Pop the top card from the AI's deck               
     ai_card = ai_decks[player_name].pop(0)
+    center_pile.append(ai_card)
 
     return {
         "name": str(ai_card),
-        "image": ai_card.get_imageFileName()
+        "image": ai_card.get_imageFileName(),
+        "center_pile": [str(c) for c in center_pile]
     }
 
 # Flip a card with auto refill
@@ -172,16 +175,51 @@ def save_reaction_time(player_name: str, reaction_time: ReactionTime):
     return {"message": "Main: Reaction time saved", "reaction_times": reaction_times[player_name]}
 
 
+@app.post("/player_flip_card/{player_name}")
+def player_flip_card(player_name: str):
+    if player_name not in players:
+        return {"error": "Player not found"}
+    
+    player = players[player_name]
+    if not player.deck:
+        return {"error": "Player deck is empty"}
+
+    card = player.deck.pop(0)
+    center_pile.append(card)
+
+    return {
+        "name": str(card),
+        "image": card.get_imageFileName(),
+        "center_pile": [str(c) for c in center_pile]
+
+    }
+
+@app.post("/collect_center_pile/{player_name}")
+def collect_center_pile(player_name: str):
+    if player_name not in players:
+        return {"error": "Player not found"}
+
+    player = players[player_name]
+    collected_cards = center_pile.copy()
+    player.deck.extend(collected_cards)
+    center_pile.clear()
+
+    return {
+        "message": f"{len(collected_cards)} cards collected",
+        "collected": [str(card) for card in collected_cards],
+        "player_deck_count": len(player.deck)
+    }
+
 @app.post("/predict_performance")
 def predict_performance(data: ReactionData):
-    input_array = np.array(data.reaction_times).reshape(1, -1)
-
     try:
-        prediction = model.predict(input_array)
-        return {"prediction": prediction[0]}
+        prediction = AiPlayer.predict_ai_reaction(data.reaction_times)
+        return {"prediction": prediction}
     except Exception as e:
         return {"error": str(e)}
 # Remember to run python .\main.py in the backend directory to run the server.
 # Then open the http://localhost:8000/static/home.html
 if __name__ == "__main__":
     uvicorn.run(app, host="localhost", port=8000)
+
+
