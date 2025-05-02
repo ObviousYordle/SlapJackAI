@@ -238,73 +238,106 @@ function updateRemainingDeck(count) {
 
 // Game code below?
 
+let centerPile = [];
+
+// Initial card center to start the game
 document.addEventListener("DOMContentLoaded", () => {
+    let playerName = "Player";
+    let playerHand = [];
+    let aiHand = [];
+
     const centerCard = document.getElementById("center-card");
-  
+    const playerDeck = document.getElementById("player-deck");
+
+    // Start game by clicking the center card
     centerCard.addEventListener("click", () => {
+        fetch(`/initialize_game/${playerName}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("center-card").style.display = "none";
+                document.getElementById("shuffle-instruction").style.display = "none";
+                playerDeck.style.display = "inline";
+                document.getElementById("ai-deck").style.display = "inline";
 
-        //im not sure but i have to declear a const playername here fort he game to load the cards, if possible could David could you look into this
+                playerHand = data.player_deck;
+                aiHand = data.ai_deck;
 
-        playerName = "Player";
+                console.log("Player hand:", playerHand.map(c => c.name));
+                console.log("AI hand:", aiHand.map(c => c.name));
 
-  
-      fetch(`/initialize_game/${playerName}`)
-        .then(response => response.json())
-        .then(data => {
-            //Hide the middle deck after shuffling and display the player and ai decks
-            document.getElementById("center-card").style.display = "none";
-            document.getElementById("shuffle-instruction").style.display = "none";
-            document.getElementById("player-deck").style.display = "inline";
-            document.getElementById("ai-deck").style.display = "inline";
-            
-            playerHand = data.player_deck;
-            aiHand = data.ai_deck;
-            
-            //Just to make sure that both player's annd ai's decks have 26 cards that are unique and no duplicate
-            //Should delete this when the actual game is played so the player cant just inspect the page and see the cards but for now just leave it so i can see that the correct cards are being played
-            console.log("Player hand:", playerHand.map(c => c.name));
-            console.log("AI hand:", aiHand.map(c => c.name));
-  
-        })
-        .catch(error => {
-            console.error(error);
-        });
-    }, { once: true });
-});
+                // Changes card center listener for the slap
+                centerCard.addEventListener("click", async () => {
 
-document.getElementById("player-deck").addEventListener("click", () => {
-    if (playerHand.length === 0) return;
-
-    fetch(`/player_flip_card/${playerName}`, {
-        method: "POST"
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.image) {
-            document.getElementById("center-card").style.display = "inline";
-            document.getElementById("center-card").src = data.image;
-        }
-        //making sure the cards from player deck is going into the center pile
-        console.log("[Player] Played:", data.card);
-        console.log("Center pile after player's move:", data.center_pile);
-
-         // When the ai is playing, disable the click on he player's deck so the user can't spam their deck
-        document.getElementById("player-deck").style.pointerEvents = "none";
-        // A random amount of time it take for the ai to place its card down instead of havign a set time which might make it feel a little robotic and more predictable
-        const delay = Math.random() * 2000 + 1000;
-        setTimeout(() => {
-            fetch(`/ai_flip_card/${playerName}`)
-                .then(response => response.json())
-                .then(aiData => {
-                    if (aiData.image) {
-                        document.getElementById("center-card").src = aiData.image;
+                    // Handling ALL slaps
+                    if (centerPile.length === 0) {
+                        alert("There's no card to slap!");
+                        return;
                     }
-                    //Making sure the cards from the ai is actually adding to the center pile
-                    console.log("[AI] Played:", aiData.card);
-                    console.log("Center pile after AI's move:", aiData.center_pile);
-                    // After the ai finish placing the card down, allow the user to click again.
-                    document.getElementById("player-deck").style.pointerEvents = "auto";
+
+                    const topCard = centerPile[centerPile.length - 1];
+                    console.log("Player slapped:", topCard);
+
+                    // Jack Slap
+                    if (topCard.includes("Jack")) {
+                        try {
+                            const res = await fetch(`/collect_center_pile/${playerName}`, {
+                                method: "POST"
+                            });
+                            const result = await res.json();
+                            alert(`You slapped a Jack and collected ${result.collected.length} cards!`);
+                            console.log("Collected pile:", result.collected);
+
+                            // Clear center pile visually
+                            centerCard.style.display = "none";
+                            centerPile = [];
+                        } catch (err) {
+                            console.error("Error collecting pile:", err);
+                        }
+                    } else {
+                        alert(`Wrong slap! Top card was: ${topCard}`);
+                    }
                 });
-        }, delay);
+            })
+            .catch(error => {
+                console.error(error);
+            });
+    }, { once: true });
+
+    // Player flips a card
+    playerDeck.addEventListener("click", () => {
+        if (playerHand.length === 0) return;
+
+        fetch(`/player_flip_card/${playerName}`, { method: "POST" })
+            .then(response => response.json())
+            .then(data => {
+                if (data.image) {
+                    centerCard.style.display = "inline";
+                    centerCard.src = data.image;
+                }
+
+                centerPile = data.center_pile;
+                console.log("[Player] Played:", data.card);
+                console.log("Center pile:", centerPile);
+
+                playerDeck.style.pointerEvents = "none";
+
+                // Simulate AI turn after delay
+                const delay = Math.random() * 2000 + 1000;
+                setTimeout(() => {
+                    fetch(`/ai_flip_card/${playerName}`)
+                        .then(response => response.json())
+                        .then(aiData => {
+                            if (aiData.image) {
+                                centerCard.src = aiData.image;
+                            }
+
+                            centerPile = aiData.center_pile;
+                            console.log("[AI] Played:", aiData.card);
+                            console.log("Center pile:", centerPile);
+
+                            playerDeck.style.pointerEvents = "auto";
+                        });
+                }, delay);
+            });
     });
 });
