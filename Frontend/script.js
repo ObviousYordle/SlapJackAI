@@ -6,15 +6,41 @@ let reactionTime = 0;
 let flipInterval;
 let isJackDrawn = false;
 let reactionTimes = [];
-let reactionsRemaining = 10;  // Can adjust number of reactions here
+let reactionsRemaining = 1;  // Can adjust number of reactions here
 let playerHand = [];
 let aiHand = [];
 let centerCardPile = []; // Holds cards placed in the center
 
+// Save the reactionTimes array to to the session storage so we can load it in the main game 
+function saveReactionTimes() {
+    // Save the reactionTimes array to localStorage as a string
+    sessionStorage.setItem("reactionTimes", JSON.stringify(reactionTimes));
+}
+
+//for loading the reactionTimes array from session storage
+function loadReactionTimes() {
+    const savedReactionTimes = sessionStorage.getItem("reactionTimes");
+    if (savedReactionTimes) {
+        // If data exists in localStorage, parse it into the array
+        reactionTimes = JSON.parse(savedReactionTimes);
+    } else {
+        // If no data exists, initialize an empty array
+        reactionTimes = [];
+    }
+    console.log("Loaded reactionTimes:", reactionTimes);
+}
+function loadPlayerName() {
+    const savedName = sessionStorage.getItem("playerName");
+    if (savedName) {
+        playerName = savedName;
+        console.log("Loaded playerName:", playerName);
+    }
+    
+}
 // Add player
 function addPlayer() {
     playerName = document.getElementById("player-name").value;
-    localStorage.setItem("playerName", playerName); // Store it for future use
+    sessionStorage.setItem("playerName", playerName); // Store it for future use
 
     if (!playerName) {
         alert("Please enter a player name.");
@@ -134,6 +160,7 @@ function reactToJack() {
         reactionTime = performance.now() - startTime;
         alert(`Your reaction time: ${reactionTime.toFixed(2)} ms\nYou reacted correctly!`);
         reactionTimes.push(reactionTime.toFixed(2)); // Save to local array
+        saveReactionTimes();
         reactionsRemaining--; // Decrement reactions remaining
 
         console.log("Reactions remaining after correct reaction:", reactionsRemaining); // Debugging line
@@ -242,9 +269,13 @@ let centerPile = [];
 
 // Initial card center to start the game
 document.addEventListener("DOMContentLoaded", () => {
-    let playerName = "Player";
+    //let playerName = "Player";
     let playerHand = [];
     let aiHand = [];
+    let jackAppeared = null;
+
+    loadPlayerName();
+    loadReactionTimes();
 
     const centerCard = document.getElementById("center-card");
     const playerDeck = document.getElementById("player-deck");
@@ -258,7 +289,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 document.getElementById("shuffle-instruction").style.display = "none";
                 playerDeck.style.display = "inline";
                 document.getElementById("ai-deck").style.display = "inline";
-
+                loadReactionTimes();
                 playerHand = data.player_deck;
                 aiHand = data.ai_deck;
 
@@ -279,6 +310,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     // Jack Slap
                     if (topCard.includes("Jack")) {
+                        const slapTime = performance.now(); 
+                        const gameReactionTime = slapTime - startTime; 
+                        reactionTimes.push(gameReactionTime);                        
+                        if (reactionTimes.length > 10) {
+                            reactionTimes.shift();  
+                        }
                         try {
                             const res = await fetch(`/collect_center_pile/${playerName}`, {
                                 method: "POST"
