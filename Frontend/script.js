@@ -280,6 +280,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const centerCard = document.getElementById("center-card");
     const playerDeck = document.getElementById("player-deck");
+    
 
     // Start game by clicking the center card
     centerCard.addEventListener("click", () => {
@@ -293,6 +294,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 loadReactionTimes();
                 playerHand = data.player_deck;
                 aiHand = data.ai_deck;
+                
 
                 console.log("Player hand:", playerHand.map(c => c.name));
                 console.log("AI hand:", aiHand.map(c => c.name));
@@ -312,10 +314,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     // Jack Slap
                     if (topCard.includes("Jack")) {
                         //Reaction timer for slapping the jack card and add it to the reaction time list for ai to track
-                        const slapTime = performance.now(); 
-                        const gameReactionTime = slapTime - startTime; 
-                        reactionTimes.push(parseFloat(gameReactionTime.toFixed(2)));        
-                        console.log("Reaction time recorded:", gameReactionTime.toFixed(2), "ms");
+                        
+                        reactionTime = performance.now() - startTime; 
+                        reactionTimes.push(reactionTime.toFixed(2));        
                         console.log("Updated reactionTimes array:", reactionTimes);               
                         if (reactionTimes.length > 10) {
                             reactionTimes.shift();  
