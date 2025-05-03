@@ -29,6 +29,7 @@ function loadReactionTimes() {
     }
     console.log("Loaded reactionTimes:", reactionTimes);
 }
+//Loading the player name when initializing the main game
 function loadPlayerName() {
     const savedName = sessionStorage.getItem("playerName");
     if (savedName) {
@@ -310,9 +311,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     // Jack Slap
                     if (topCard.includes("Jack")) {
+                        //Reaction timer for slapping the jack card and add it to the reaction time list for ai to track
                         const slapTime = performance.now(); 
                         const gameReactionTime = slapTime - startTime; 
-                        reactionTimes.push(gameReactionTime);                        
+                        reactionTimes.push(parseFloat(gameReactionTime.toFixed(2)));        
+                        console.log("Reaction time recorded:", gameReactionTime.toFixed(2), "ms");
+                        console.log("Updated reactionTimes array:", reactionTimes);               
                         if (reactionTimes.length > 10) {
                             reactionTimes.shift();  
                         }
@@ -355,7 +359,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 centerPile = data.center_pile;
                 console.log("[Player] Played:", data.card);
                 console.log("Center pile:", centerPile);
-
                 playerDeck.style.pointerEvents = "none";
 
                 // Simulate AI turn after delay
@@ -371,7 +374,6 @@ document.addEventListener("DOMContentLoaded", () => {
                             centerPile = aiData.center_pile;
                             console.log("[AI] Played:", aiData.card);
                             console.log("Center pile:", centerPile);
-
                             playerDeck.style.pointerEvents = "auto";
                         });
                 }, delay);
