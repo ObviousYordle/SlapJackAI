@@ -6,7 +6,7 @@ let reactionTime = 0;
 let flipInterval;
 let isJackDrawn = false;
 let reactionTimes = [];
-let reactionsRemaining = 10;  // Can adjust number of reactions here
+let reactionsRemaining = 1;  // Can adjust number of reactions here
 let playerHand = [];
 let aiHand = [];
 let centerCardPile = []; // Holds cards placed in the center
@@ -345,45 +345,6 @@ document.addEventListener("DOMContentLoaded", () => {
             });
     }, { once: true });
 
-    //  // Function to check if the top card is a Jack
-    //  function checkForJackInCenter() {
-    //     const topCard = centerPile[centerPile.length - 1];
-    //     if (topCard) {
-    //         const cardImagePath = `PNG-cards-1.3/${topCard.name.toLowerCase().replace(/ /g, "_")}.png`; 
-
-    //         // Send card image path to backend for Jack prediction
-    //         fetch('/predict_card_image', {
-    //             method: 'POST',
-    //             headers: {
-    //                 'Content-Type': 'application/json',
-    //             },
-    //             body: JSON.stringify({ image_path: cardImagePath })
-    //         })
-    //         .then(response => response.json())
-    //         .then(prediction => {
-    //             if (prediction.is_jack) {
-    //                 console.log(`Detected Jack card: ${topCard.name}`);
-    //                 jackAppeared = topCard;
-    //                 // Handle AI reaction after detecting the Jack card
-    //                 handleAIAction(jackAppeared);
-    //             }
-    //         })
-    //         .catch(error => {
-    //             console.error('Error predicting card image:', error);
-    //         });
-    //     }
-    // }
-
-    // // Handle AI action if Jack is detected
-    // function handleAIAction(jackCard) {
-    //     console.log("AI reacts to Jack card:", jackCard.name);
-        
-    //     // Implement AI behavior based on Jack detection, like slapping the Jack or choosing a strategy
-    //     setTimeout(() => {
-    //         console.log("AI makes a move...");
-    //         // Add code for AI reaction here (i will do this later)
-    //     }, 1000);
-    // }
 
     // Player flips a card
     playerDeck.addEventListener("click", () => {
@@ -405,7 +366,18 @@ document.addEventListener("DOMContentLoaded", () => {
                 playerDeck.style.pointerEvents = "none";
 
                 // Check if the top card of the center pile is a Jack after player plays a card
-                checkForJackInCenter();
+                fetch(`/check_ai_should_slap/${playerName}`)
+                    .then(response => response.json())
+                    .then(aiSlapResult => {
+                        console.log("AI slap check result:", aiSlapResult); 
+                        console.log("Top card during AI check:", centerPile[centerPile.length - 1]);
+                        if (aiSlapResult.ai_slap) {
+                            alert("AI slapped your Jack card and took the pile!");
+                            centerCard.style.display = "none";
+                            centerPile = [];
+                            playerDeck.style.pointerEvents = "auto";
+                            return;
+                        }
 
                 // Simulate AI turn after delay
                 const delay = Math.random() * 2000 + 1000;
@@ -413,6 +385,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     fetch(`/ai_flip_card/${playerName}`)
                         .then(response => response.json())
                         .then(aiData => {
+
+                            console.log("AI flip result:", aiData);
+                            
                             if (aiData.image) {
                                 centerCard.src = aiData.image;
                             }
@@ -422,9 +397,14 @@ document.addEventListener("DOMContentLoaded", () => {
                             console.log("Center pile:", centerPile);
                             playerDeck.style.pointerEvents = "auto";
 
-                            checkForJackInCenter();
+                            if (aiData.ai_slap) {
+                                alert("AI slapped its own Jack card and took the pile!");
+                                centerCard.style.display = "none";
+                                centerPile = [];
+                            }
                         });
                 }, delay);
             });
+        });
     });
 });

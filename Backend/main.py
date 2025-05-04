@@ -116,10 +116,17 @@ def ai_flip_card(player_name: str):
     ai_card = ai_decks[player_name].pop(0)
     center_pile.append(ai_card)
 
-        # Absolute or relative image path to the card
-    image_path = os.path.join("../Frontend/PNG-cards-1.3", ai_card.get_imageFileName())
+    # image path to the card
+    image_path = ai_card.get_imageFileName(for_backend=True)
 
-    # Check if AI should slap (i.e., card is Jack)
+
+
+    print(f"[AI] Checking top card: {ai_card} at path: {image_path}")
+    if not os.path.exists(image_path):
+        print("Image path does not exist:", image_path)
+
+
+    # Check if AI should slap (like if the card is Jack)
     is_jack = AiPlayer.is_jack_card(image_path)
     ai_collected = []
 
@@ -132,16 +139,42 @@ def ai_flip_card(player_name: str):
 
     return {
         "name": str(ai_card),
-        "image": ai_card.get_imageFileName(),
+        "image": ai_card.get_imageFileName(as_url=True),
         "center_pile": [str(c) for c in center_pile],
         "ai_slap": is_jack,
         "collected": ai_collected
     }
 
-@app.post("/ai_check_jack/")
-async def ai_check_jack(file: UploadFile = File(...)):
-    is_jack = AiPlayer.is_jack_card(file.file)
-    return {"is_jack": is_jack}
+@app.get("/check_ai_should_slap/{player_name}")
+def check_ai_should_slap(player_name: str):
+    if player_name not in ai_decks:
+        return {"error": "Invalid player name"}
+    if not center_pile:
+        return {"ai_slap": False}
+    
+
+    top_card = center_pile[-1]
+    image_path = top_card.get_imageFileName(for_backend=True)
+
+    if not os.path.exists(image_path):
+        print(f"[ERROR] Image file not found at path: {image_path}")
+    print(f"[AI] Checking top card: {top_card} at path: {image_path}")
+
+    is_jack = AiPlayer.is_jack_card(image_path)
+    print(f"[AI] is_jack_card result: {is_jack}")
+    ai_collected = []
+
+    if is_jack:
+        ai_decks[player_name].extend(center_pile)
+        ai_collected = [str(card) for card in center_pile]
+        center_pile.clear()
+        print(f"[AI] Slapped and collected {len(ai_collected)} cards.")
+
+    return {
+        "ai_slap": is_jack,
+        "collected": ai_collected,
+        "image_path": image_path
+    }
 
 # Flip a card with auto refill
 @app.get("/flip_card/{player_name}")
@@ -211,7 +244,7 @@ def player_flip_card(player_name: str):
 
     return {
         "name": str(card),
-        "image": card.get_imageFileName(),
+        "image": card.get_imageFileName(as_url=True),
         "center_pile": [str(c) for c in center_pile]
 
     }

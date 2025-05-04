@@ -46,7 +46,7 @@ class AiPlayer(Player):
                 print(f"Image path does not exist: {image_path}")
                 return False
             img = Image.open(image_path).convert("RGB").resize((224, 224))
-            img_array = image.img_to_array(img) / 255.0  
+            img_array = image.img_to_array(img) / 255.0
             img_array = np.expand_dims(img_array, axis=0)  
 
             prediction = cnn_model.predict(img_array)[0][0]
