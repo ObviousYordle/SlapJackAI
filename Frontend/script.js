@@ -345,45 +345,45 @@ document.addEventListener("DOMContentLoaded", () => {
             });
     }, { once: true });
 
-     // Function to check if the top card is a Jack
-     function checkForJackInCenter() {
-        const topCard = centerPile[centerPile.length - 1];
-        if (topCard) {
-            const cardImagePath = `PNG-cards-1.3/${topCard.name.toLowerCase().replace(/ /g, "_")}.png`; // Assuming topCard has a 'name' field
+    //  // Function to check if the top card is a Jack
+    //  function checkForJackInCenter() {
+    //     const topCard = centerPile[centerPile.length - 1];
+    //     if (topCard) {
+    //         const cardImagePath = `PNG-cards-1.3/${topCard.name.toLowerCase().replace(/ /g, "_")}.png`; 
 
-            // Send card image path to backend for Jack prediction
-            fetch('/predict_card_image', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ image_path: cardImagePath })
-            })
-            .then(response => response.json())
-            .then(prediction => {
-                if (prediction.is_jack) {
-                    console.log(`Detected Jack card: ${topCard.name}`);
-                    jackAppeared = topCard;
-                    // Handle AI reaction (if any) after detecting the Jack card
-                    handleAIAction(jackAppeared);
-                }
-            })
-            .catch(error => {
-                console.error('Error predicting card image:', error);
-            });
-        }
-    }
+    //         // Send card image path to backend for Jack prediction
+    //         fetch('/predict_card_image', {
+    //             method: 'POST',
+    //             headers: {
+    //                 'Content-Type': 'application/json',
+    //             },
+    //             body: JSON.stringify({ image_path: cardImagePath })
+    //         })
+    //         .then(response => response.json())
+    //         .then(prediction => {
+    //             if (prediction.is_jack) {
+    //                 console.log(`Detected Jack card: ${topCard.name}`);
+    //                 jackAppeared = topCard;
+    //                 // Handle AI reaction after detecting the Jack card
+    //                 handleAIAction(jackAppeared);
+    //             }
+    //         })
+    //         .catch(error => {
+    //             console.error('Error predicting card image:', error);
+    //         });
+    //     }
+    // }
 
-    // Handle AI action if Jack is detected
-    function handleAIAction(jackCard) {
-        console.log("AI reacts to Jack card:", jackCard.name);
+    // // Handle AI action if Jack is detected
+    // function handleAIAction(jackCard) {
+    //     console.log("AI reacts to Jack card:", jackCard.name);
         
-        // Implement AI behavior based on Jack detection, like slapping the Jack or choosing a strategy
-        setTimeout(() => {
-            console.log("AI makes a move...");
-            // Add code for AI reaction here (e.g., slapping the Jack)
-        }, 1000);
-    }
+    //     // Implement AI behavior based on Jack detection, like slapping the Jack or choosing a strategy
+    //     setTimeout(() => {
+    //         console.log("AI makes a move...");
+    //         // Add code for AI reaction here (i will do this later)
+    //     }, 1000);
+    // }
 
     // Player flips a card
     playerDeck.addEventListener("click", () => {
