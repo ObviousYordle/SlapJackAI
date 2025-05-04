@@ -7,6 +7,8 @@ import time
 import joblib
 import numpy as np
 from typing import List, Dict
+from fastapi import UploadFile, File
+
 
 from Deck import Deck
 from Player import Player
@@ -105,7 +107,6 @@ def create_player(name: str):
         "deck_size": len(player.deck)
     }
 
-#note for david: This is causing the problem so the images cant be display in the game. I made this in a hurry since im leaving and dont have time to fully check but u should look over this
 @app.get("/ai_flip_card/{player_name}")
 def ai_flip_card(player_name: str):
     if player_name not in ai_decks or not ai_decks[player_name]:
@@ -115,11 +116,32 @@ def ai_flip_card(player_name: str):
     ai_card = ai_decks[player_name].pop(0)
     center_pile.append(ai_card)
 
+        # Absolute or relative image path to the card
+    image_path = os.path.join("../Frontend/PNG-cards-1.3", ai_card.get_imageFileName())
+
+    # Check if AI should slap (i.e., card is Jack)
+    is_jack = AiPlayer.is_jack_card(image_path)
+    ai_collected = []
+
+    if is_jack:
+        # Simulate AI collecting the pile
+        ai_decks[player_name].extend(center_pile)
+        ai_collected = [str(card) for card in center_pile]
+        center_pile.clear()
+        print(f"[AI] Slapped and collected {len(ai_collected)} cards.")
+
     return {
         "name": str(ai_card),
         "image": ai_card.get_imageFileName(),
-        "center_pile": [str(c) for c in center_pile]
+        "center_pile": [str(c) for c in center_pile],
+        "ai_slap": is_jack,
+        "collected": ai_collected
     }
+
+@app.post("/ai_check_jack/")
+async def ai_check_jack(file: UploadFile = File(...)):
+    is_jack = AiPlayer.is_jack_card(file.file)
+    return {"is_jack": is_jack}
 
 # Flip a card with auto refill
 @app.get("/flip_card/{player_name}")

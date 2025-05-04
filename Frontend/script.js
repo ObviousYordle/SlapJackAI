@@ -6,7 +6,7 @@ let reactionTime = 0;
 let flipInterval;
 let isJackDrawn = false;
 let reactionTimes = [];
-let reactionsRemaining = 1;  // Can adjust number of reactions here
+let reactionsRemaining = 10;  // Can adjust number of reactions here
 let playerHand = [];
 let aiHand = [];
 let centerCardPile = []; // Holds cards placed in the center
@@ -345,6 +345,46 @@ document.addEventListener("DOMContentLoaded", () => {
             });
     }, { once: true });
 
+     // Function to check if the top card is a Jack
+     function checkForJackInCenter() {
+        const topCard = centerPile[centerPile.length - 1];
+        if (topCard) {
+            const cardImagePath = `PNG-cards-1.3/${topCard.name.toLowerCase().replace(/ /g, "_")}.png`; // Assuming topCard has a 'name' field
+
+            // Send card image path to backend for Jack prediction
+            fetch('/predict_card_image', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ image_path: cardImagePath })
+            })
+            .then(response => response.json())
+            .then(prediction => {
+                if (prediction.is_jack) {
+                    console.log(`Detected Jack card: ${topCard.name}`);
+                    jackAppeared = topCard;
+                    // Handle AI reaction (if any) after detecting the Jack card
+                    handleAIAction(jackAppeared);
+                }
+            })
+            .catch(error => {
+                console.error('Error predicting card image:', error);
+            });
+        }
+    }
+
+    // Handle AI action if Jack is detected
+    function handleAIAction(jackCard) {
+        console.log("AI reacts to Jack card:", jackCard.name);
+        
+        // Implement AI behavior based on Jack detection, like slapping the Jack or choosing a strategy
+        setTimeout(() => {
+            console.log("AI makes a move...");
+            // Add code for AI reaction here (e.g., slapping the Jack)
+        }, 1000);
+    }
+
     // Player flips a card
     playerDeck.addEventListener("click", () => {
         if (playerHand.length === 0) return;
@@ -359,8 +399,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 centerPile = data.center_pile;
                 console.log("[Player] Played:", data.card);
+                
+
                 console.log("Center pile:", centerPile);
                 playerDeck.style.pointerEvents = "none";
+
+                // Check if the top card of the center pile is a Jack after player plays a card
+                checkForJackInCenter();
 
                 // Simulate AI turn after delay
                 const delay = Math.random() * 2000 + 1000;
@@ -376,6 +421,8 @@ document.addEventListener("DOMContentLoaded", () => {
                             console.log("[AI] Played:", aiData.card);
                             console.log("Center pile:", centerPile);
                             playerDeck.style.pointerEvents = "auto";
+
+                            checkForJackInCenter();
                         });
                 }, delay);
             });
