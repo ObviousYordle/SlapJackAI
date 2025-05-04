@@ -1,19 +1,33 @@
+
+import os
+from typing import List
+
+
 from Player import Player
+import numpy as np
+import tensorflow as tf
+import joblib
+from tensorflow.keras.models import load_model
+
+#Get the path to where the pre trained AI model for reaction time is stored and load it in order to use the model on predicting its reaction speed based on the user's times.
+AImodel_path = os.path.join(os.path.dirname(__file__), "..", "AIModel", "reaction_time_model.pkl")
+model = joblib.load(AImodel_path)
 
 """AiPlayer inherits Player, gets same moves but has added difficulty changer"""
 class AiPlayer(Player):
 
-    # Still deciding how I want to difficulty. Definitely ML for sure though
-    def __init__(self, name, ai_reaction_time):
+
+    def __init__(self, name):
         super().__init__(name)
-        self.ai_reaction_time = ai_reaction_time
+        self.ai_reaction_time = None  
 
 
-    # Just testing very basic, non-machine learning, adaptation first
-    # Ex: player wins reaction, AI bumps up in difficulty by manually adding/subtracting from the AI's reaction speed
-    def difficulty_adjust(self, player_reaction_time):
-        if player_reaction_time < self.ai_reaction_time:
-            self.ai_reaction_time = player_reaction_time
+
+    @staticmethod
+    def predict_ai_reaction(reaction_times: List[float]) -> float:
+        input_array = np.array(reaction_times).reshape(1, -1)
+        prediction = model.predict(input_array)
+        return prediction[0]
 
 
 

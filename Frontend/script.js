@@ -6,11 +6,42 @@ let reactionTime = 0;
 let flipInterval;
 let isJackDrawn = false;
 let reactionTimes = [];
-let reactionsRemaining = 10;  // Can adjust number of reactions here
+let reactionsRemaining = 1;  // Can adjust number of reactions here
+let playerHand = [];
+let aiHand = [];
+let centerCardPile = []; // Holds cards placed in the center
 
+// Save the reactionTimes array to to the session storage so we can load it in the main game 
+function saveReactionTimes() {
+    // Save the reactionTimes array to localStorage as a string
+    sessionStorage.setItem("reactionTimes", JSON.stringify(reactionTimes));
+}
+
+//for loading the reactionTimes array from session storage
+function loadReactionTimes() {
+    const savedReactionTimes = sessionStorage.getItem("reactionTimes");
+    if (savedReactionTimes) {
+        // If data exists in localStorage, parse it into the array
+        reactionTimes = JSON.parse(savedReactionTimes);
+    } else {
+        // If no data exists, initialize an empty array
+        reactionTimes = [];
+    }
+    console.log("Loaded reactionTimes:", reactionTimes);
+}
+//Loading the player name when initializing the main game
+function loadPlayerName() {
+    const savedName = sessionStorage.getItem("playerName");
+    if (savedName) {
+        playerName = savedName;
+        console.log("Loaded playerName:", playerName);
+    }
+    
+}
 // Add player
 function addPlayer() {
     playerName = document.getElementById("player-name").value;
+    sessionStorage.setItem("playerName", playerName); // Store it for future use
 
     if (!playerName) {
         alert("Please enter a player name.");
@@ -30,9 +61,9 @@ function addPlayer() {
             // Show game elements
             document.getElementById("card-container").style.display = "block";
             document.getElementById("start-button").style.display = "block";
-            document.getElementById("reaction-instruction").style.display = "block";  // Show the instruction
-            document.getElementById("reaction-info").style.display = "block";  // Show the instruction
-            document.getElementById("reactions-remaining").innerText = reactionsRemaining; // Display remaining reactions
+            document.getElementById("reaction-instruction").style.display = "block";  
+            document.getElementById("reaction-info").style.display = "block";  
+            document.getElementById("reactions-remaining").innerText = reactionsRemaining; 
         })
         .catch(error => {
             console.error("Error:", error);
@@ -43,7 +74,7 @@ function addPlayer() {
 function startFlipping() {
     flipInterval = setInterval(flipCard, 1250);
     document.getElementById("start-button").style.display = "none";
-    document.getElementById("reaction-instruction").style.display = "none";  // Hide instruction
+    document.getElementById("reaction-instruction").style.display = "none";  
     document.getElementById("react-button").style.display = "block";
     document.getElementById("reaction-info").style.display = "block";
 
@@ -102,9 +133,14 @@ function flipCard() {
 }
 
 // This makes the card interactable, you can click on it to "Slap"
-document.querySelector('.card').addEventListener('click', function() {
-    reactToJack(); // React to the Jack when the card is clicked
-});
+document.addEventListener('DOMContentLoaded', function () {
+    const card = document.querySelector('.card');
+    if (card) {
+      card.addEventListener('click', function () {
+        reactToJack(); // React to the Jack when the card is clicked
+      });
+    }
+  });
 
 // Function when a Jack is present
 function reactToJack() {
@@ -125,6 +161,7 @@ function reactToJack() {
         reactionTime = performance.now() - startTime;
         alert(`Your reaction time: ${reactionTime.toFixed(2)} ms\nYou reacted correctly!`);
         reactionTimes.push(reactionTime.toFixed(2)); // Save to local array
+        saveReactionTimes();
         reactionsRemaining--; // Decrement reactions remaining
 
         console.log("Reactions remaining after correct reaction:", reactionsRemaining); // Debugging line
@@ -166,9 +203,12 @@ function reactToJack() {
         document.getElementById("reaction-info").style.display = "none";
         clearInterval(flipInterval); // Ensure the flipping stops
         console.log("Calling showReactionTimes", reactionsRemaining);
+        document.getElementById("Start-Game-button").style.display = "block";
         showReactionTimes(); // Show reaction times
         alert("You've used all your reactions!");
+        console.log(playerName)
 
+        //Send the reaction times to the backend so that the pre trained reaction_time_model can predict the performance after converting those times into float values since that's what the AI is expecting
         fetch("/predict_performance", {
             method: "POST",
             headers: {
@@ -182,7 +222,8 @@ function reactToJack() {
         .then(data => {
             const prediction = data.prediction;
             console.log("AI Prediction:", prediction);
-    
+            
+            //Display the prediction time based on the player's initial reaction time test
             if (prediction !== undefined) {
                 document.getElementById("ai-prediction").innerText = `AI Reaction Speed: ${prediction.toFixed(2)} ms`;
             } else {
@@ -210,7 +251,7 @@ function showReactionTimes() {
     });
 
     // Display the reaction times container
-    document.getElementById("reaction-times-container").style.display = "block"; // Ensure it's visible
+    document.getElementById("reaction-times-container").style.display = "block"; 
 }
 
 function updateRemainingDeck(count) {
@@ -221,3 +262,139 @@ function updateRemainingDeck(count) {
         </div>
     `;
 }
+
+
+// Game code below?
+
+
+
+let centerPile = [];
+
+// Initial card center to start the game
+document.addEventListener("DOMContentLoaded", () => {
+    //let playerName = "Player";
+    let playerHand = [];
+    let aiHand = [];
+    let jackAppeared = null;
+
+    loadPlayerName();
+    loadReactionTimes();
+
+    const centerCard = document.getElementById("center-card");
+    const playerDeck = document.getElementById("player-deck");
+
+
+    // Start game by clicking the center card
+    centerCard.addEventListener("click", () => {
+        fetch(`/initialize_game/${playerName}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("center-card").style.display = "none";
+                document.getElementById("shuffle-instruction").style.display = "none";
+                playerDeck.style.display = "inline";
+                document.getElementById("ai-deck").style.display = "inline";
+                loadReactionTimes();
+                playerHand = data.player_deck;
+                aiHand = data.ai_deck;
+
+
+                console.log("Player hand:", playerHand.map(c => c.name));
+                console.log("AI hand:", aiHand.map(c => c.name));
+
+                // Changes card center listener for the slap
+                centerCard.addEventListener("click", async () => {
+
+                    // Handling ALL slaps
+                    if (centerPile.length === 0) {
+                        alert("There's no card to slap!");
+                        return;
+                    }
+
+                    const topCard = centerPile[centerPile.length - 1];
+                    console.log("Player slapped:", topCard);
+
+                    // Jack Slap
+                    if (topCard.includes("Jack")) {
+                        //Reaction timer for slapping the jack card and add it to the reaction time list for ai to track
+
+                        reactionTime = performance.now() - startTime;
+                        reactionTimes.push(reactionTime.toFixed(2));
+                        console.log("Updated reactionTimes array:", reactionTimes);
+                        if (reactionTimes.length > 10) {
+                            reactionTimes.shift();
+                        }
+                        try {
+                            const res = await fetch(`/collect_center_pile/${playerName}`, {
+                                method: "POST"
+                            });
+                            const result = await res.json();
+                            alert(`You slapped a Jack and collected ${result.collected.length} cards!`);
+                            console.log("Collected pile:", result.collected);
+
+                            // Clear center pile visually
+                            centerCard.style.display = "none";
+                            centerPile = [];
+                        } catch (err) {
+                            console.error("Error collecting pile:", err);
+                        }
+                    } else {
+                        alert(`Wrong slap! Top card was: ${topCard}`);
+                    }
+                });
+            })
+            .catch(error => {
+                console.error(error);
+            });
+    }, { once: true });
+
+    // Player flips a card
+    playerDeck.addEventListener("click", () => {
+        if (playerHand.length === 0) return;
+
+        fetch(`/player_flip_card/${playerName}`, { method: "POST" })
+            .then(response => response.json())
+            .then(data => {
+                if (data.image) {
+                    centerCard.style.display = "inline";
+                    centerCard.src = data.image;
+                }
+
+                centerPile = data.center_pile;
+                console.log("[Player] Played:", data.card);
+                console.log("Center pile:", centerPile);
+                // Check what is at the top of the center Pile, if its Jack start the timer
+                // FYI: data.card does NOT work, you have to extract it from centerPile
+                if (centerPile[centerPile.length - 1].includes("Jack")){
+                    startTime = performance.now();
+                    console.log("[Player Flip] Jack appeared. Timer started.");
+                }
+
+                playerDeck.style.pointerEvents = "none";
+
+                // Simulate AI turn after delay
+                const delay = Math.random() * 2000 + 1000;
+                setTimeout(() => {
+                    fetch(`/ai_flip_card/${playerName}`)
+                        .then(response => response.json())
+                        .then(aiData => {
+                            if (aiData.image) {
+                                centerCard.src = aiData.image;
+                            }
+
+                            centerPile = aiData.center_pile;
+                            console.log("[AI] Played:", aiData.card);
+                            console.log("Center pile:", centerPile);
+
+                            // Check what is at the top of the center Pile, if its Jack start the timer
+                            // FYI: data.card does NOT work, you have to extract it from centerPile
+                            if (centerPile[centerPile.length - 1].includes("Jack")){
+                                startTime = performance.now();
+                                console.log("[Player Flip] Jack appeared. Timer started.");
+                              }
+
+                            playerDeck.style.pointerEvents = "auto";
+                        });
+                }, delay);
+            });
+    });
+});

@@ -26,8 +26,15 @@
         </div>
     </div>
     
-    <div id="ai-prediction" style="margin-top: 20px; font-weight: bold;"></div>
-
+    <button class="button" id="Start-Game-button" style="display: none;">Start Game</button>
+    
+    
+    <script>
+        // Add event listener to back button to redirect to home page
+        document.getElementById("Start-Game-button").addEventListener("click", function() {
+            window.location.href = "/static/game_screen.html";  
+        });
+    </script>
     <!-- Instructions to record 10 reactions -->
     <div id="reaction-instruction" style="display: none;">
         <p>We need to record your first 10 reactions to adjust the AI's difficulty to your skill level.</p>
@@ -54,6 +61,10 @@
     <div id="reaction-times-container" style="display: none;">
         <h3>Your Reaction Times:</h3>
         <ul id="reaction-times-list"></ul>
+
+        <!--Show the recorded AI prediction time-->
+        <h3>AI Reaction Times:</h3>
+        <div id="ai-prediction" style="margin-top: 20px;"></div>
     </div>
 
 

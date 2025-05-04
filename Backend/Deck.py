@@ -17,4 +17,10 @@ class Deck:
     def __str__(self):
         # Print new line and print each card __str__
         return "\n".join(str(card) for card in self.deck)
+    
+    def split_deck(self):
+        #Shuffle the deck and split the 52 cards into two even deck of 26 cards
+        self.shuffle()
+        half = len(self.deck) // 2
+        return self.deck[:half], self.deck[half:]
 
