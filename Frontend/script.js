@@ -266,6 +266,8 @@ function updateRemainingDeck(count) {
 
 // Game code below?
 
+
+
 let centerPile = [];
 
 // Initial card center to start the game
@@ -280,7 +282,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const centerCard = document.getElementById("center-card");
     const playerDeck = document.getElementById("player-deck");
-    
+
 
     // Start game by clicking the center card
     centerCard.addEventListener("click", () => {
@@ -294,7 +296,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 loadReactionTimes();
                 playerHand = data.player_deck;
                 aiHand = data.ai_deck;
-                
+
 
                 console.log("Player hand:", playerHand.map(c => c.name));
                 console.log("AI hand:", aiHand.map(c => c.name));
@@ -314,12 +316,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     // Jack Slap
                     if (topCard.includes("Jack")) {
                         //Reaction timer for slapping the jack card and add it to the reaction time list for ai to track
-                        
-                        reactionTime = performance.now() - startTime; 
-                        reactionTimes.push(reactionTime.toFixed(2));        
-                        console.log("Updated reactionTimes array:", reactionTimes);               
+
+                        reactionTime = performance.now() - startTime;
+                        reactionTimes.push(reactionTime.toFixed(2));
+                        console.log("Updated reactionTimes array:", reactionTimes);
                         if (reactionTimes.length > 10) {
-                            reactionTimes.shift();  
+                            reactionTimes.shift();
                         }
                         try {
                             const res = await fetch(`/collect_center_pile/${playerName}`, {
@@ -360,6 +362,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 centerPile = data.center_pile;
                 console.log("[Player] Played:", data.card);
                 console.log("Center pile:", centerPile);
+                // Check what is at the top of the center Pile, if its Jack start the timer
+                // FYI: data.card does NOT work, you have to extract it from centerPile
+                if (centerPile[centerPile.length - 1].includes("Jack")){
+                    startTime = performance.now();
+                    console.log("[Player Flip] Jack appeared. Timer started.");
+                }
+
                 playerDeck.style.pointerEvents = "none";
 
                 // Simulate AI turn after delay
@@ -375,6 +384,14 @@ document.addEventListener("DOMContentLoaded", () => {
                             centerPile = aiData.center_pile;
                             console.log("[AI] Played:", aiData.card);
                             console.log("Center pile:", centerPile);
+
+                            // Check what is at the top of the center Pile, if its Jack start the timer
+                            // FYI: data.card does NOT work, you have to extract it from centerPile
+                            if (centerPile[centerPile.length - 1].includes("Jack")){
+                                startTime = performance.now();
+                                console.log("[Player Flip] Jack appeared. Timer started.");
+                              }
+
                             playerDeck.style.pointerEvents = "auto";
                         });
                 }, delay);

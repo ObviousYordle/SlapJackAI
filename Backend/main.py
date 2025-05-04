@@ -185,13 +185,14 @@ def player_flip_card(player_name: str):
         return {"error": "Player deck is empty"}
 
     card = player.deck.pop(0)
+    print(str(card))
     center_pile.append(card)
 
     return {
-        "name": str(card),
+        # This card doesn't work for some strange reason, if you want the card use the center_pile list and extract it
+        "card": str(card),
         "image": card.get_imageFileName(),
-        "center_pile": [str(c) for c in center_pile]
-
+        "center_pile": [str(c) for c in center_pile],
     }
 
 @app.post("/collect_center_pile/{player_name}")
