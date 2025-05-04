@@ -6,16 +6,33 @@ let reactionTime = 0;
 let flipInterval;
 let isJackDrawn = false;
 let reactionTimes = [];
-let reactionsRemaining = 1;  // Can adjust number of reactions here
+let reactionsRemaining = 10;  // Can adjust number of reactions here
 let playerHand = [];
 let aiHand = [];
 let centerCardPile = []; // Holds cards placed in the center
+let initialAIPrediction  = 0;
 
 // Save the reactionTimes array to to the session storage so we can load it in the main game 
 function saveReactionTimes() {
     // Save the reactionTimes array to localStorage as a string
     sessionStorage.setItem("reactionTimes", JSON.stringify(reactionTimes));
 }
+
+function saveinitialAIPrediction() {
+    if (initialAIPrediction !== undefined) {
+        sessionStorage.setItem("initialAIPrediction", initialAIPrediction.toString());
+        console.log("Saved initialAIPrediction to sessionStorage:", initialAIPrediction);
+    }
+}
+
+function loadinitialAIPrediction() {
+    const savedPrediction = sessionStorage.getItem("initialAIPrediction");
+    if (savedPrediction !== null) {
+        initialAIPrediction = parseFloat(savedPrediction);
+        console.log("Loaded initialAIPrediction from sessionStorage:", initialAIPrediction);
+    }
+}
+
 
 //for loading the reactionTimes array from session storage
 function loadReactionTimes() {
@@ -220,12 +237,14 @@ function reactToJack() {
         })
         .then(response => response.json())
         .then(data => {
-            const prediction = data.prediction;
-            console.log("AI Prediction:", prediction);
+            initialAIPrediction = data.prediction;
+            console.log("AI Prediction:", initialAIPrediction);
             
+            saveinitialAIPrediction();
+
             //Display the prediction time based on the player's initial reaction time test
-            if (prediction !== undefined) {
-                document.getElementById("ai-prediction").innerText = `AI Reaction Speed: ${prediction.toFixed(2)} ms`;
+            if (initialAIPrediction !== undefined) {
+                document.getElementById("ai-prediction").innerText = `AI Reaction Speed: ${initialAIPrediction.toFixed(2)} ms`;
             } else {
                 document.getElementById("ai-prediction").innerText = `AI Prediction: Error`;
             }
@@ -279,10 +298,35 @@ document.addEventListener("DOMContentLoaded", () => {
 
     loadPlayerName();
     loadReactionTimes();
+    loadinitialAIPrediction();
 
     const centerCard = document.getElementById("center-card");
     const playerDeck = document.getElementById("player-deck");
 
+    function updateAIPrediction() {
+        fetch('/predict_performance', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ reaction_times: reactionTimes }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.prediction !== undefined) {
+                console.log("Predicted AI reaction time:", data.prediction.toFixed(2), "ms");
+                const aiDisplay = document.getElementById("ai-reaction-time");
+                if (aiDisplay) {
+                    aiDisplay.textContent = `${data.prediction.toFixed(2)} ms`;
+                }
+            } else {
+                console.error("Prediction error:", data.error);
+            }
+        })
+        .catch(error => {
+            console.error("Failed to get AI prediction:", error);
+        });
+    }
 
     // Start game by clicking the center card
     centerCard.addEventListener("click", () => {
@@ -323,6 +367,13 @@ document.addEventListener("DOMContentLoaded", () => {
                         if (reactionTimes.length > 10) {
                             reactionTimes.shift();
                         }
+                        await fetch(`/save_reaction_time/${playerName}`, {
+                            method: "POST",
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ reaction_time: reactionTime }),
+                        });
+                        
+                        updateAIPrediction();
                         try {
                             const res = await fetch(`/collect_center_pile/${playerName}`, {
                                 method: "POST"
