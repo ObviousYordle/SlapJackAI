@@ -6,7 +6,7 @@ let reactionTime = 0;
 let flipInterval;
 let isJackDrawn = false;
 let reactionTimes = [];
-let reactionsRemaining = 10;  // Can adjust number of reactions here
+let reactionsRemaining = 1;  // Can adjust number of reactions here
 let playerHand = [];
 let aiHand = [];
 let centerCardPile = []; // Holds cards placed in the center
@@ -344,7 +344,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 console.log("Player hand:", playerHand.map(c => c.name));
                 console.log("AI hand:", aiHand.map(c => c.name));
-
+                
+                fetch(`/ai_check_center/${playerName}`)
+                    .then(response => response.json())
+                    .then(aiCheckResult => {
+                        console.log("AI check center file result:", aiCheckResult);
+                    })
+                    .catch(error => {
+                        console.error("Error during AI center check:", error);
+                    });
                 // Changes card center listener for the slap
                 centerCard.addEventListener("click", async () => {
 
@@ -372,7 +380,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ reaction_time: reactionTime }),
                         });
-                        
+
                         updateAIPrediction();
                         try {
                             const res = await fetch(`/collect_center_pile/${playerName}`, {

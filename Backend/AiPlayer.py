@@ -2,6 +2,8 @@
 import os
 from typing import List
 
+import keras
+
 
 from Player import Player
 import numpy as np
@@ -15,7 +17,7 @@ from PIL import Image
 AImodel_path = os.path.join(os.path.dirname(__file__), "..", "AIModel", "reaction_time_model.pkl")
 model = joblib.load(AImodel_path)
 
-CNNModel_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "AIModel", "cnn_model.keras"))
+CNNModel_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "AIModel", "new_cnn_model.keras"))
 cnn_model = load_model(CNNModel_path)
 """AiPlayer inherits Player, gets same moves but has added difficulty changer"""
 class AiPlayer(Player):
@@ -42,12 +44,16 @@ class AiPlayer(Player):
             if not os.path.exists(image_path):
                 print(f"Image path does not exist: {image_path}")
                 return False
-            img = Image.open(image_path).convert("RGB").resize((224, 224))
-            img_array = image.img_to_array(img) / 255.0
+            
+            img = keras.utils.load_img(image_path, target_size=(224, 224))
+
+            img_array = image.img_to_array(img) 
             img_array = np.expand_dims(img_array, axis=0)  
 
-            prediction = cnn_model.predict(img_array)[0][0]
-            return prediction > 0.5  
+            prediction = cnn_model.predict(img_array)
+            score = float(prediction[0][0])
+            #return true if predictor classfiy score as 0 since 0 is considered as a Jack
+            return round(score, 2) == 0
         except Exception as e:
             print(f"Error predicting Jack card: {e}")
             return False

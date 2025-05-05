@@ -1,5 +1,5 @@
 # Fast API Import
-from fastapi import FastAPI
+from fastapi import FastAPI, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 import os
@@ -7,6 +7,7 @@ import time
 import joblib
 import numpy as np
 from typing import List, Dict
+from pathlib import Path
 
 from Deck import Deck
 from Player import Player
@@ -37,6 +38,39 @@ class ReactionTime(BaseModel):
 
 class ReactionData(BaseModel):
     reaction_times: List[float]
+
+def get_ai_slap_task(player_name: str):
+    def check_and_slap():
+        print("[DEBUG] check_and_slap function started")
+        if not center_pile:
+            print("[DEBUG] Center pile is empty, returning early.")
+            return
+
+        top_card = center_pile[-1]
+        image_url = top_card.get_imageFileName()
+         
+        
+        image_name = os.path.basename(image_url)
+
+        # Get absolute path to the root directory since we want to get images in the Frontend folder
+        base_dir = Path(__file__).resolve().parent.parent
+        image_path = base_dir / "Frontend" / "PNG-cards-1.3" / image_name
+        print(f"[DEBUG] Image path: {image_path}")
+
+        #check using the cnn model to see if it is a jack or not
+        if AiPlayer.is_jack_card(image_path):
+            print(f"[AI] Slapped! Jack detected: {top_card}")
+            ai_decks[player_name].extend(center_pile.copy())
+            center_pile.clear()
+        else:
+            print(f"[AI] No slap: Top card is not a Jack - {top_card}")
+    
+    return check_and_slap
+
+@app.get("/ai_check_center/{player_name}")
+async def ai_check_center(player_name: str, background_tasks: BackgroundTasks):
+    background_tasks.add_task(get_ai_slap_task(player_name))
+    return {"message": "AI slap task added"}
 
 #Initialize the game by shuffling the deck to ensure that it is randomize each game
 @app.get("/initialize_game/{player_name}")
@@ -107,14 +141,16 @@ def create_player(name: str):
 
 #note for david: This is causing the problem so the images cant be display in the game. I made this in a hurry since im leaving and dont have time to fully check but u should look over this
 @app.get("/ai_flip_card/{player_name}")
-def ai_flip_card(player_name: str):
+def ai_flip_card(player_name: str, background_tasks: BackgroundTasks):
     if player_name not in ai_decks or not ai_decks[player_name]:
         return {"error": "AI has no cards left!"}
     
     # Pop the top card from the AI's deck               
     ai_card = ai_decks[player_name].pop(0)
     center_pile.append(ai_card)
+    print(f"[DEBUG] AI flipped card: {ai_card}. Center pile: {center_pile}")
 
+    background_tasks.add_task(get_ai_slap_task(player_name))
     return {
         "name": str(ai_card),
         "image": ai_card.get_imageFileName(),
@@ -176,7 +212,7 @@ def save_reaction_time(player_name: str, reaction_time: ReactionTime):
 
 
 @app.post("/player_flip_card/{player_name}")
-def player_flip_card(player_name: str):
+def player_flip_card(player_name: str, background_tasks: BackgroundTasks):
     if player_name not in players:
         return {"error": "Player not found"}
     
@@ -187,7 +223,9 @@ def player_flip_card(player_name: str):
     card = player.deck.pop(0)
     print(str(card))
     center_pile.append(card)
+    print(f"[DEBUG] Player flipped card: {card}. Center pile: {center_pile}")
 
+    background_tasks.add_task(get_ai_slap_task(player_name))
     return {
         # This card doesn't work for some strange reason, if you want the card use the center_pile list and extract it
         "card": str(card),
