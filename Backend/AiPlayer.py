@@ -11,7 +11,7 @@ import tensorflow as tf
 import joblib
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
-#from PIL import Image
+from PIL import Image
 from pathlib import Path
 from Card import Card
 
