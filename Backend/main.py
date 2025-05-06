@@ -6,6 +6,7 @@ import os
 import time
 import joblib
 import numpy as np
+import asyncio
 from typing import List, Dict
 from pathlib import Path
 
@@ -46,27 +47,28 @@ class PredictionInput(BaseModel):
     player_name: str
     prediction: float 
 
+def is_jack(card: Card) -> bool:
+    return card.rank == "Jack"
+
 def get_ai_slap_task(player_name: str):
-    def check_and_slap():
+    delay = ai_reaction_predictions.get(player_name, 1.0)
+    print("Sync delay is now: ", delay)
+    time.sleep(delay)  
 
-        delay = ai_reaction_predictions.get(player_name, 1.0)
-        print("Delay is now: ", delay)
-        time.sleep(delay + 0.1)
-        base_dir = Path(__file__).resolve().parent.parent
-        image_base_path = base_dir / "Frontend" / "PNG-cards-1.3"
+    base_dir = Path(__file__).resolve().parent.parent
+    image_base_path = base_dir / "Frontend" / "PNG-cards-1.3"
 
-        if pile_claimed_by.get(player_name) is not None:
-            print(f"[AI SLAP] Player already claimed pile, skipping.")
-            ai_slap_successful[player_name] = False
-            return
-        if AiPlayer.check_slap(center_pile, image_base_path):
-            ai_decks[player_name].extend(center_pile.copy())
-            center_pile.clear()
-            ai_slap_successful[player_name] = True
-        else:
-            ai_slap_successful[player_name] = False
+    if pile_claimed_by.get(player_name) is not None:
+        print(f"[AI SLAP] Player already claimed pile, skipping.")
+        ai_slap_successful[player_name] = False
+        return
 
-    return check_and_slap
+    if AiPlayer.check_slap(center_pile, image_base_path):
+        ai_decks[player_name].extend(center_pile.copy())
+        center_pile.clear()
+        ai_slap_successful[player_name] = True
+    else:
+        ai_slap_successful[player_name] = False
 
 @app.get("/get_ai_slap_status/{player_name}")
 def get_ai_slap_status(player_name: str):
@@ -170,8 +172,8 @@ def ai_flip_card(player_name: str, background_tasks: BackgroundTasks):
     ai_card = ai_decks[player_name].pop(0)
     center_pile.append(ai_card)
     print(f"[DEBUG] AI flipped card: {ai_card}. Center pile: {center_pile}")
-
-    background_tasks.add_task(get_ai_slap_task(player_name))
+    if is_jack(ai_card):
+        background_tasks.add_task(get_ai_slap_task, player_name)
     return {
         "name": str(ai_card),
         "image": ai_card.get_imageFileName(),
@@ -246,8 +248,8 @@ def player_flip_card(player_name: str, background_tasks: BackgroundTasks):
     print(str(card))
     center_pile.append(card)
     print(f"[DEBUG] Player flipped card: {card}. Center pile: {center_pile}")
-
-    background_tasks.add_task(get_ai_slap_task(player_name))
+    if is_jack(card):
+        background_tasks.add_task(get_ai_slap_task, player_name)
     return {
        
         "card": str(card),
