@@ -47,6 +47,9 @@ class PredictionInput(BaseModel):
     player_name: str
     prediction: float 
 
+#Since the ai model can detect the difference between jack and non jack card, this function is used so that tie model only predict once the jack card is played
+#to prevent runtime collision because i was having trouble where the model would make a prediction on every card and it would be predicting a card and before it finishes, the next card is placed and if that card
+#is a jack then the model jsut instantly slaps the jack.
 def is_jack(card: Card) -> bool:
     return card.rank == "Jack"
 
@@ -59,7 +62,6 @@ def get_ai_slap_task(player_name: str):
     image_base_path = base_dir / "Frontend" / "PNG-cards-1.3"
 
     if pile_claimed_by.get(player_name) is not None:
-        print(f"[AI SLAP] Player already claimed pile, skipping.")
         ai_slap_successful[player_name] = False
         return
 
@@ -171,7 +173,7 @@ def ai_flip_card(player_name: str, background_tasks: BackgroundTasks):
     # Pop the top card from the AI's deck               
     ai_card = ai_decks[player_name].pop(0)
     center_pile.append(ai_card)
-    print(f"[DEBUG] AI flipped card: {ai_card}. Center pile: {center_pile}")
+    print(f"[DEBUGGING] AI flipped card: {ai_card}. Center pile: {center_pile}")
     if is_jack(ai_card):
         background_tasks.add_task(get_ai_slap_task, player_name)
     return {
@@ -247,7 +249,7 @@ def player_flip_card(player_name: str, background_tasks: BackgroundTasks):
     card = player.deck.pop(0)
     print(str(card))
     center_pile.append(card)
-    print(f"[DEBUG] Player flipped card: {card}. Center pile: {center_pile}")
+    print(f"[DEBUGGING] Player flipped card: {card}. Center pile: {center_pile}")
     if is_jack(card):
         background_tasks.add_task(get_ai_slap_task, player_name)
     return {

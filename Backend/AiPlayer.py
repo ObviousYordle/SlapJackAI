@@ -78,9 +78,9 @@ class AiPlayer(Player):
         #return true is the top card is a Jack else return false
         #Depending on true or false the ai will either slap or not slap the card
         if AiPlayer.is_jack_card(image_path):
-            print(f"[AI] Slapped! Jack detected: {top_card}")
+            print(f"AI Slapped! Jack detected: {top_card}")
             return True
         else:
-            print(f"[AI] No slap: Top card is not a Jack - {top_card}")
+            print(f"AI Didn't Slap: Top card is not a Jack - {top_card}")
             return False
 

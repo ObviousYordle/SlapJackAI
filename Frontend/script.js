@@ -27,20 +27,13 @@ function saveinitialAIPrediction() {
     }
 }
 
-// function loadinitialAIPrediction() {
-//     const savedPrediction = sessionStorage.getItem("initialAIPrediction");
-//     if (savedPrediction !== null) {
-//         initialAIPrediction = parseFloat(savedPrediction);
-//         console.log("Loaded initialAIPrediction from sessionStorage:", initialAIPrediction);
-//     }
-// }
 function loadinitialAIPrediction() {
     const savedPrediction = sessionStorage.getItem("initialAIPrediction");
     if (savedPrediction !== null) {
         initialAIPrediction = parseFloat(savedPrediction);
         console.log("Loaded initialAIPrediction from sessionStorage:", initialAIPrediction);
 
-        // Send prediction to backend
+        // Send prediction to backend so this can be the ai's first reaction time when slapping a jack
         fetch('/set_ai_prediction', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -331,7 +324,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const centerCard = document.getElementById("center-card");
     const playerDeck = document.getElementById("player-deck");
-
+    //Refresh the deck of bot hplayer and ai (using his for console logging)
     function refreshDecks() {
         fetch(`/get_decks/${playerName}`)
             .then(res => res.json())
@@ -358,6 +351,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             })
     }
+    //this is to update the prediction time for the ai everytime the user slaps the card
     function updateAIPrediction() {
         fetch('/predict_performance', {
             method: 'POST',
