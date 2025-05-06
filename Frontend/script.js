@@ -6,7 +6,7 @@ let reactionTime = 0;
 let flipInterval;
 let isJackDrawn = false;
 let reactionTimes = [];
-let reactionsRemaining = 1;  // Can adjust number of reactions here
+let reactionsRemaining = 5;  // Can adjust number of reactions here
 let playerHand = [];
 let aiHand = [];
 let centerCardPile = []; // Holds cards placed in the center
@@ -15,7 +15,9 @@ let initialAIPrediction  = 0;
 // Save the reactionTimes array to to the session storage so we can load it in the main game 
 function saveReactionTimes() {
     // Save the reactionTimes array to localStorage as a string
-    sessionStorage.setItem("reactionTimes", JSON.stringify(reactionTimes));
+    if (playerName) {
+        sessionStorage.setItem(`${playerName}_reactionTimes`, JSON.stringify(reactionTimes));
+    }
 }
 
 function saveinitialAIPrediction() {
@@ -25,26 +27,52 @@ function saveinitialAIPrediction() {
     }
 }
 
+// function loadinitialAIPrediction() {
+//     const savedPrediction = sessionStorage.getItem("initialAIPrediction");
+//     if (savedPrediction !== null) {
+//         initialAIPrediction = parseFloat(savedPrediction);
+//         console.log("Loaded initialAIPrediction from sessionStorage:", initialAIPrediction);
+//     }
+// }
 function loadinitialAIPrediction() {
     const savedPrediction = sessionStorage.getItem("initialAIPrediction");
     if (savedPrediction !== null) {
         initialAIPrediction = parseFloat(savedPrediction);
         console.log("Loaded initialAIPrediction from sessionStorage:", initialAIPrediction);
+
+        // Send prediction to backend
+        fetch('/set_ai_prediction', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                player_name: playerName,
+                prediction: initialAIPrediction
+            })
+        })
+        .then(res => res.json())
+        .then(serverRes => {
+            console.log("Initial prediction sent to backend:", serverRes.message);
+        })
+        .catch(err => {
+            console.error("Failed to send initial AI prediction:", err);
+        });
     }
 }
 
-
 //for loading the reactionTimes array from session storage
 function loadReactionTimes() {
-    const savedReactionTimes = sessionStorage.getItem("reactionTimes");
-    if (savedReactionTimes) {
-        // If data exists in localStorage, parse it into the array
-        reactionTimes = JSON.parse(savedReactionTimes);
-    } else {
-        // If no data exists, initialize an empty array
-        reactionTimes = [];
+    
+    if(playerName){
+        const savedReactionTimes = sessionStorage.getItem(`${playerName}_reactionTimes`);
+        if (savedReactionTimes) {
+            // If data exists in localStorage, parse it into the array
+            reactionTimes = JSON.parse(savedReactionTimes);
+        } else {
+            // If no data exists, initialize an empty array
+            reactionTimes = [];
+        }
+        console.log("Loaded reactionTimes:", reactionTimes);
     }
-    console.log("Loaded reactionTimes:", reactionTimes);
 }
 //Loading the player name when initializing the main game
 function loadPlayerName() {
@@ -59,6 +87,7 @@ function loadPlayerName() {
 function addPlayer() {
     playerName = document.getElementById("player-name").value;
     sessionStorage.setItem("playerName", playerName); // Store it for future use
+    reactionTimes = [];
 
     if (!playerName) {
         alert("Please enter a player name.");
@@ -173,13 +202,13 @@ function reactToJack() {
         return;
     }
 
-    // If isJackDrawn is true, get the reaction performance
+    // If isJackDrawn is true, get the reaction performance and decrement the amount of reaction remaining
     if (isJackDrawn) {
         reactionTime = performance.now() - startTime;
         alert(`Your reaction time: ${reactionTime.toFixed(2)} ms\nYou reacted correctly!`);
         reactionTimes.push(reactionTime.toFixed(2)); // Save to local array
         saveReactionTimes();
-        reactionsRemaining--; // Decrement reactions remaining
+        reactionsRemaining--; 
 
         console.log("Reactions remaining after correct reaction:", reactionsRemaining); // Debugging line
 
@@ -232,7 +261,8 @@ function reactToJack() {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                reaction_times: reactionTimes.map(parseFloat) 
+                // reaction_times: reactionTimes.map(parseFloat) 
+                reaction_times: reactionTimes.flatMap(rt => [parseFloat(rt), parseFloat(rt)])
             })
         })
         .then(response => response.json())
@@ -284,14 +314,13 @@ function updateRemainingDeck(count) {
 
 
 // Game code below?
-
+//We should have made different script to seperate the game from the initial testing page but it is fine
 
 
 let centerPile = [];
 
 // Initial card center to start the game
 document.addEventListener("DOMContentLoaded", () => {
-    //let playerName = "Player";
     let playerHand = [];
     let aiHand = [];
     let jackAppeared = null;
@@ -303,13 +332,44 @@ document.addEventListener("DOMContentLoaded", () => {
     const centerCard = document.getElementById("center-card");
     const playerDeck = document.getElementById("player-deck");
 
+    function refreshDecks() {
+        fetch(`/get_decks/${playerName}`)
+            .then(res => res.json())
+            .then(data => {
+                playerHand = data.player_deck;
+                aiHand = data.ai_deck;
+    
+                console.log("Updated Player deck:", playerHand.map(c => c.name));
+                console.log("Updated AI deck:", aiHand.map(c => c.name));
+            })
+            .catch(err => {
+                console.error("Failed to refresh decks:", err);
+            });
+    }
+    function checkAISlapStatus() {
+        fetch(`/get_ai_slap_status/${playerName}`)
+            .then(res => res.json())
+            .then(status => {
+                if (status.slapped) {
+                    alert("AI slapped a Jack!");
+                    centerCard.style.display = "none";
+                    centerPile = [];
+                    refreshDecks();
+                }
+            })
+    }
     function updateAIPrediction() {
         fetch('/predict_performance', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ reaction_times: reactionTimes }),
+            body: JSON.stringify({
+                reaction_times: reactionTimes
+                    .slice(-5) // take the most recent 5 reactions and and padded it twice since the model requires 10 reaction time to predict
+                    .flatMap(reactTime => [parseFloat(reactTime), parseFloat(reactTime)])
+            }),
+
         })
         .then(response => response.json())
         .then(data => {
@@ -319,6 +379,22 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (aiDisplay) {
                     aiDisplay.textContent = `${data.prediction.toFixed(2)} ms`;
                 }
+                 // Send prediction to backend
+                fetch('/set_ai_prediction', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        player_name: playerName,
+                        prediction: data.prediction
+                    })
+                })
+                .then(res => res.json())
+                .then(serverResponse => {
+                    console.log("Sent prediction to backend:", serverResponse.message);
+                })
+                .catch(err => {
+                    console.error("Error sending AI prediction to backend:", err);
+                });
             } else {
                 console.error("Prediction error:", data.error);
             }
@@ -341,19 +417,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 playerHand = data.player_deck;
                 aiHand = data.ai_deck;
 
-
+                //Use for debugging since we need to see if the deck are being populated correctly
+                //Should comment this out when game is done so player can't inspect the console and see their cards
                 console.log("Player hand:", playerHand.map(c => c.name));
                 console.log("AI hand:", aiHand.map(c => c.name));
                 
-                fetch(`/ai_check_center/${playerName}`)
-                    .then(response => response.json())
-                    .then(aiCheckResult => {
-                        console.log("AI check center file result:", aiCheckResult);
-                    })
-                    .catch(error => {
-                        console.error("Error during AI center check:", error);
-                    });
-                // Changes card center listener for the slap
                 centerCard.addEventListener("click", async () => {
 
                     // Handling ALL slaps
@@ -364,6 +432,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     const topCard = centerPile[centerPile.length - 1];
                     console.log("Player slapped:", topCard);
+
 
                     // Jack Slap
                     if (topCard.includes("Jack")) {
@@ -386,6 +455,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             const res = await fetch(`/collect_center_pile/${playerName}`, {
                                 method: "POST"
                             });
+                            refreshDecks();
                             const result = await res.json();
                             alert(`You slapped a Jack and collected ${result.collected.length} cards!`);
                             console.log("Collected pile:", result.collected);
@@ -406,7 +476,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
     }, { once: true });
 
-    // Player flips a card
+    // Player flips a card then Ai flips teh card afterward
     playerDeck.addEventListener("click", () => {
         if (playerHand.length === 0) return;
 
@@ -427,16 +497,22 @@ document.addEventListener("DOMContentLoaded", () => {
                     startTime = performance.now();
                     console.log("[Player Flip] Jack appeared. Timer started.");
                 }
+                setTimeout(checkAISlapStatus, 3000);
 
                 playerDeck.style.pointerEvents = "none";
 
-                // Simulate AI turn after delay
+                // Delay for when AI places down a card so its harder to predict when the AI would place the card down instead of just having a set time
                 const delay = Math.random() * 2000 + 1000;
                 setTimeout(() => {
                     fetch(`/ai_flip_card/${playerName}`)
                         .then(response => response.json())
                         .then(aiData => {
-                            if (aiData.image) {
+                            // if (aiData.image) {
+                            //     //centerCard.style.display = "inline";
+                            //     centerCard.src = aiData.image;
+                            // }
+                            if (aiData && aiData.image && centerCard) {
+                                centerCard.style.display = "inline";
                                 centerCard.src = aiData.image;
                             }
 
@@ -452,6 +528,8 @@ document.addEventListener("DOMContentLoaded", () => {
                               }
 
                             playerDeck.style.pointerEvents = "auto";
+
+                            setTimeout(checkAISlapStatus, 3000);
                         });
                 }, delay);
             });
