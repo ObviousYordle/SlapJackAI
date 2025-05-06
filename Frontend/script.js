@@ -326,19 +326,57 @@ document.addEventListener("DOMContentLoaded", () => {
     const playerDeck = document.getElementById("player-deck");
     //Refresh the deck of bot hplayer and ai (using his for console logging)
     function refreshDecks() {
-        fetch(`/get_decks/${playerName}`)
-            .then(res => res.json())
-            .then(data => {
-                playerHand = data.player_deck;
-                aiHand = data.ai_deck;
-    
-                console.log("Updated Player deck:", playerHand.map(c => c.name));
-                console.log("Updated AI deck:", aiHand.map(c => c.name));
-            })
-            .catch(err => {
-                console.error("Failed to refresh decks:", err);
-            });
-    }
+    fetch(`/get_decks/${playerName}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.error) {
+                alert(`Error: ${data.error}`);
+                return;
+            }
+            playerHand = data.player_deck;
+            aiHand = data.ai_deck;
+
+            // Log updated decks for debugging
+            console.log("Updated Player deck:", playerHand.map(c => c.name));
+            console.log("Updated AI deck:", aiHand.map(c => c.name));
+
+            // Update the deck sizes displayed on the page
+            document.getElementById("player-deck-count").textContent = playerHand.length;
+            document.getElementById("ai-deck-count").textContent = aiHand.length;
+
+            // checkGameOver(playerHand.length, aiHand.length);
+        })
+        .catch(err => {
+            console.error("Failed to refresh decks:", err);
+        });
+}
+    function refreshDecksAndCheckGameOver() {
+    fetch(`/get_decks/${playerName}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.error) {
+                alert(`Error: ${data.error}`);
+                return;
+            }
+            playerHand = data.player_deck;
+            aiHand = data.ai_deck;
+
+            // Log updated decks for debugging
+            console.log("Updated Player deck:", playerHand.map(c => c.name));
+            console.log("Updated AI deck:", aiHand.map(c => c.name));
+
+            // Update the deck sizes displayed on the page
+            document.getElementById("player-deck-count").textContent = playerHand.length;
+            document.getElementById("ai-deck-count").textContent = aiHand.length;
+
+            checkGameOver(playerHand.length, aiHand.length);
+        })
+        .catch(err => {
+            console.error("Failed to refresh decks:", err);
+        });
+}
+
+
     function checkAISlapStatus() {
         fetch(`/get_ai_slap_status/${playerName}`)
             .then(res => res.json())
@@ -347,7 +385,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     alert("AI slapped a Jack!");
                     centerCard.style.display = "none";
                     centerPile = [];
-                    refreshDecks();
+                    refreshDecksAndCheckGameOver();
+
                 }
             })
     }
@@ -410,6 +449,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 loadReactionTimes();
                 playerHand = data.player_deck;
                 aiHand = data.ai_deck;
+                refreshDecks()
 
                 //Use for debugging since we need to see if the deck are being populated correctly
                 //Should comment this out when game is done so player can't inspect the console and see their cards
@@ -423,6 +463,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         alert("There's no card to slap!");
                         return;
                     }
+
 
                     const topCard = centerPile[centerPile.length - 1];
                     console.log("Player slapped:", topCard);
@@ -449,7 +490,6 @@ document.addEventListener("DOMContentLoaded", () => {
                             const res = await fetch(`/collect_center_pile/${playerName}`, {
                                 method: "POST"
                             });
-                            refreshDecks();
                             const result = await res.json();
                             alert(`You slapped a Jack and collected ${result.collected.length} cards!`);
                             console.log("Collected pile:", result.collected);
@@ -457,11 +497,33 @@ document.addEventListener("DOMContentLoaded", () => {
                             // Clear center pile visually
                             centerCard.style.display = "none";
                             centerPile = [];
+
                         } catch (err) {
                             console.error("Error collecting pile:", err);
                         }
                     } else {
+                        // Inform the player of the bad slap
                         alert(`Wrong slap! Top card was: ${topCard}`);
+
+                        // Send a POST request to the backend to penalize the player
+                        fetch(`/bad_slap/${playerName}`, {
+                            method: 'POST'
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log(data);
+                            console.log("Deck after failed slap")
+                            refreshDecks()
+                            if (data.error) {
+                                alert(`Error: ${data.error}`);
+                            } else {
+                                alert(`${data.message}`);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error during bad slap penalty:', error);
+                            alert('An error occurred while processing the bad slap.');
+                        });
                     }
                 });
             })
@@ -472,7 +534,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Player flips a card then Ai flips teh card afterward
     playerDeck.addEventListener("click", () => {
-        if (playerHand.length === 0) return;
+        if (playerHand.length === 0)
+        {
+          refreshDecksAndCheckGameOver();
+        }
 
         fetch(`/player_flip_card/${playerName}`, { method: "POST" })
             .then(response => response.json())
@@ -482,9 +547,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     centerCard.src = data.image;
                 }
 
+
                 centerPile = data.center_pile;
                 console.log("[Player] Played:", data.card);
                 console.log("Center pile:", centerPile);
+                refreshDecks()
+
                 // Check what is at the top of the center Pile, if its Jack start the timer
                 // FYI: data.card does NOT work, you have to extract it from centerPile
                 if (centerPile[centerPile.length - 1].includes("Jack")){
@@ -494,6 +562,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 setTimeout(checkAISlapStatus, 3000);
 
                 playerDeck.style.pointerEvents = "none";
+
 
                 // Delay for when AI places down a card so its harder to predict when the AI would place the card down instead of just having a set time
                 const delay = Math.random() * 2000 + 1000;
@@ -523,9 +592,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
                             playerDeck.style.pointerEvents = "auto";
 
+                            refreshDecksAndCheckGameOver()
+
                             setTimeout(checkAISlapStatus, 3000);
                         });
                 }, delay);
             });
     });
 });
+
+function checkGameOver(playerDeckLength, aiDeckLength) {
+    if (playerDeckLength === 0) {
+        alert("Game over! AI wins.");
+        fullPageRefresh()
+        return true;
+    } else if (aiDeckLength === 0) {
+        alert("Game over! You win!");
+        fullPageRefresh()
+        return true;
+    }
+    return false;
+}
+
+function fullPageRefresh() {
+    setTimeout(() => {
+        window.location.replace(window.location.href);
+    }, 1000);
+}

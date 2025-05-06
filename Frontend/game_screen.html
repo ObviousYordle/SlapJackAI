@@ -13,9 +13,26 @@
     </div>
 
     <p id="shuffle-instruction">Click the card to shuffle and distribute!</p>
-    <!-- Center Card -->
-    <div id="card-center" class="card-container">
-        <img id="center-card" src="PNG-cards-1.3/Back_Card.png" alt="Center Card" style="width:200px; height:auto; cursor:pointer;">
+
+    <!-- Deck Count & Center Card Row -->
+    <div style="display: flex; justify-content: center; align-items: center; gap: 40px; margin: 20px 0;">
+
+        <!-- Player Deck Count (now on left) -->
+        <div id="player-deck-size" style="text-align: center;">
+            <p>Player's Deck: <span id="player-deck-count">0</span></p>
+        </div>
+
+        <!-- Center Card -->
+        <div id="card-center" class="card-container">
+            <img id="center-card" src="PNG-cards-1.3/Back_Card.png" alt="Center Card"
+                 style="width:200px; height:auto; cursor:pointer;">
+        </div>
+
+        <!-- AI Deck Count (now on right) -->
+        <div id="ai-deck-size" style="text-align: center;">
+            <p>AI's Deck: <span id="ai-deck-count">0</span></p>
+        </div>
+
     </div>
 
     <!-- Player's Deck -->

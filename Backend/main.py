@@ -226,9 +226,7 @@ def flip_card(player_name: str):
 @app.post("/save_reaction_time/{player_name}")
 def save_reaction_time(player_name: str, reaction_time: ReactionTime):
 
-    # If player is not in the reaction time, add that player to the reaction times dictionary
-    if player_name not in reaction_times:
-        reaction_times[player_name] = []
+    reaction_times[player_name] = []
 
     reaction_times[player_name].append(reaction_time.reaction_time)
     print(f"Reaction times for {player_name}: {reaction_times[player_name]}")  # Log to check
@@ -277,6 +275,39 @@ def collect_center_pile(player_name: str):
         "collected": [str(card) for card in collected_cards],
         "player_deck_count": len(player.deck)
     }
+
+
+@app.post('/bad_slap/{player_name}')
+def bad_slap(player_name: str):
+    print(f"Received player nameeee: {player_name}")  # Debugging line
+
+    if player_name not in players:
+        return {"error": "Player not found"}
+
+    player = players[player_name]
+
+    if not player.deck:
+        return {"error": "No cards left to give"}
+
+    # Pop the top card from the player's deck
+    give_card = player.deck.pop(0)
+
+
+    # Add the card to the AI's deck
+    # Idk how to actually add to the AI's deck
+    ai_decks[player_name].append(give_card)
+
+    # Debug: print the updated AI deck
+    print(f"AI deck for {player_name}: {ai_decks[player_name]}")
+
+    return {
+        "message": f"{player_name} made a bad slap. 1 card given to AI.",
+        "card_given": str(give_card),
+        "player_deck_size": len(player.deck),
+        "ai_deck_size": len(ai_decks[player_name])
+    }
+
+
 #For sending the predicted reaction time back into backend so the AI model can sleep for that amount of time before slapping the card
 @app.post("/set_ai_prediction")
 def set_ai_prediction(data: PredictionInput):
