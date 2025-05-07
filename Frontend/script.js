@@ -491,8 +491,15 @@ document.addEventListener("DOMContentLoaded", () => {
                                 method: "POST"
                             });
                             const result = await res.json();
-                            alert(`You slapped a Jack and collected ${result.collected.length} cards!`);
-                            console.log("Collected pile:", result.collected);
+
+                            if (result.collected.length == 0) {
+                                alert(`AI Slapped first.`);
+                            }
+
+                            else {
+                                alert(`You slapped a Jack and collected ${result.collected.length} cards!`);
+                                console.log("Collected pile:", result.collected);
+                            }
 
                             // Clear center pile visually
                             centerCard.style.display = "none";
