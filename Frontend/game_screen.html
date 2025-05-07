@@ -6,39 +6,35 @@
     <title>Slapjack Game</title>
     <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body style="display: flex; flex-direction: column; align-items: center; font-family: sans-serif;">
+
     <!-- AI's Deck -->
-    <div id="ai-deck-area" class="deck-area">
-        <img id="ai-deck" src="PNG-cards-1.3/Back_Card.png" alt="AI Deck" style="width:200px; height:auto; display:none;">
+    <div id="ai-deck-area" class="deck-area" style="text-align: center; margin-bottom: 20px;">
+        <p>AI's Deck: <span id="ai-deck-count">0</span></p>
+        <img id="ai-deck" src="PNG-cards-1.3/Back_Card.png" alt="AI Deck"
+             style="width:200px; height:auto; display:none;">
     </div>
 
-    <p id="shuffle-instruction">Click the card to shuffle and distribute!</p>
-
-    <!-- Deck Count & Center Card Row -->
-    <div style="display: flex; justify-content: center; align-items: center; gap: 40px; margin: 20px 0;">
-
-        <!-- Player Deck Count (now on left) -->
-        <div id="player-deck-size" style="text-align: center;">
-            <p>Player's Deck: <span id="player-deck-count">0</span></p>
-        </div>
-
-        <!-- Center Card -->
-        <div id="card-center" class="card-container">
-            <img id="center-card" src="PNG-cards-1.3/Back_Card.png" alt="Center Card"
-                 style="width:200px; height:auto; cursor:pointer;">
-        </div>
-
-        <!-- AI Deck Count (now on right) -->
-        <div id="ai-deck-size" style="text-align: center;">
-            <p>AI's Deck: <span id="ai-deck-count">0</span></p>
-        </div>
-
+    <!-- Center Card -->
+    <div id="card-center" class="card-container" style="text-align: center; margin: 20px 0;">
+        <img id="center-card" src="PNG-cards-1.3/Back_Card.png" alt="Center Card"
+             style="width:200px; height:auto; cursor:pointer;">
     </div>
 
     <!-- Player's Deck -->
-    <div id="player-deck-area" class="deck-area">
-        <img id="player-deck" src="PNG-cards-1.3/Back_Card.png" alt="Player Deck" style="width:200px; height:auto; display:none;">
+    <div id="player-deck-area" class="deck-area" style="text-align: center; margin-top: 20px;">
+        <img id="player-deck" src="PNG-cards-1.3/Back_Card.png" alt="Player Deck"
+             style="width:200px; height:auto; display:none;">
+        <p>Player's Deck: <span id="player-deck-count">0</span></p>
     </div>
+
+    <!-- Shuffle Instruction -->
+    <p id="shuffle-instruction" style="margin-top: 30px;">Click the card to shuffle and distribute!</p>
+
+    <button id="restart-button" style="margin-top: 20px; padding: 10px 20px; font-size: 16px; display: none;">
+        Restart Game
+    </button>
+
 
     <script src="script.js"></script>
 </body>

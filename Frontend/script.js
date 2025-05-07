@@ -611,18 +611,27 @@ document.addEventListener("DOMContentLoaded", () => {
 function checkGameOver(playerDeckLength, aiDeckLength) {
     if (playerDeckLength === 0) {
         alert("Game over! AI wins.");
-        fullPageRefresh()
+        showRestartButton();
         return true;
     } else if (aiDeckLength === 0) {
         alert("Game over! You win!");
-        fullPageRefresh()
+        showRestartButton();
+
         return true;
     }
     return false;
 }
 
-function fullPageRefresh() {
-    setTimeout(() => {
-        window.location.replace(window.location.href);
-    }, 1000);
+const restartButton = document.getElementById('restart-button');
+
+// Call this when the game ends (win/lose)
+function showRestartButton() {
+    restartButton.style.display = 'inline-block';
+    document.getElementById('center-card').style.pointerEvents = 'none';
+
 }
+
+// Restart the game when clicked
+restartButton.addEventListener('click', () => {
+    location.reload(); // Reloads the page to reset the game
+});
