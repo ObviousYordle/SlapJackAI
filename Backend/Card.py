@@ -20,6 +20,6 @@ class Card:
     
     def get_imageFileName(self):
         #get the files name of the 52 deck card from PNG-cards-1.3
-        #return f"{self.rank.lower()}_of_{self.suit.lower()}.png"
+    
         return f"/cards/{self.rank.lower()}_of_{self.suit.lower()}.png"
 

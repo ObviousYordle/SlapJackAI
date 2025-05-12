@@ -1,12 +1,14 @@
 # Fast API Import
-from fastapi import FastAPI
+from fastapi import FastAPI, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 import os
 import time
 import joblib
 import numpy as np
+import asyncio
 from typing import List, Dict
+from pathlib import Path
 
 from Deck import Deck
 from Player import Player
@@ -31,6 +33,9 @@ players = {}
 ai_decks: Dict[str, List[Card]] = {}
 center_pile: List[Card] = []
 reaction_times = {}
+ai_slap_successful = {}
+ai_reaction_predictions: Dict[str, float] = {}
+pile_claimed_by: Dict[str, str] = {}
 
 class ReactionTime(BaseModel):
     reaction_time: float
@@ -38,11 +43,65 @@ class ReactionTime(BaseModel):
 class ReactionData(BaseModel):
     reaction_times: List[float]
 
+class PredictionInput(BaseModel):
+    player_name: str
+    prediction: float 
+
+#Since the ai model can detect the difference between jack and non jack card, this function is used so that tie model only predict once the jack card is played
+#to prevent runtime collision because i was having trouble where the model would make a prediction on every card and it would be predicting a card and before it finishes, the next card is placed and if that card
+#is a jack then the model jsut instantly slaps the jack.
+def is_jack(card: Card) -> bool:
+    return card.rank == "Jack"
+
+def get_ai_slap_task(player_name: str):
+    delay = ai_reaction_predictions.get(player_name, 1.0)
+    print("Sync delay is now: ", delay)
+    time.sleep(delay)  
+
+    base_dir = Path(__file__).resolve().parent.parent
+    image_base_path = base_dir / "Frontend" / "PNG-cards-1.3"
+
+    if pile_claimed_by.get(player_name) is not None:
+        ai_slap_successful[player_name] = False
+        return
+
+    if AiPlayer.check_slap(center_pile, image_base_path):
+        ai_decks[player_name].extend(center_pile.copy())
+        center_pile.clear()
+        ai_slap_successful[player_name] = True
+    else:
+        ai_slap_successful[player_name] = False
+
+@app.get("/get_ai_slap_status/{player_name}")
+def get_ai_slap_status(player_name: str):
+    slapped = ai_slap_successful.get(player_name, False)
+    ai_slap_successful[player_name] = False  
+    return { "slapped": slapped }
+
+
+@app.get("/get_decks/{player_name}")
+def get_decks(player_name: str):
+    if player_name not in players or player_name not in ai_decks:
+        return {"error": "Player not found"}
+
+    def card_to_dict(card):
+        return {
+            "name": str(card),
+            "image": card.get_imageFileName()
+        }
+
+    player_deck = players[player_name].deck
+    ai_deck = ai_decks[player_name]
+
+    return {
+        "player_deck": [card_to_dict(card) for card in player_deck],
+        "ai_deck": [card_to_dict(card) for card in ai_deck]
+    }
 #Initialize the game by shuffling the deck to ensure that it is randomize each game
 @app.get("/initialize_game/{player_name}")
 def initialize_game(player_name: str):
 
-    print(f"Hell0{players}")
+    print(f"Hello{players}")
     fresh_deck = Deck()
     fresh_deck.shuffle()
     #Spite the deck so that the player deck and ai deck has 26 unique cards
@@ -86,7 +145,7 @@ def create_player(name: str):
         Card("Jack", "Diamonds"),
         Card("Jack", "Clubs"),
         Card("Jack", "Spades")
-    ] * 3  # 12 Jacks added for reaction test
+    ] * 3  # 16 Jacks added for reaction test
 
     fresh_deck.deck.extend(extra_jacks)
     fresh_deck.shuffle()
@@ -105,23 +164,25 @@ def create_player(name: str):
         "deck_size": len(player.deck)
     }
 
-#note for david: This is causing the problem so the images cant be display in the game. I made this in a hurry since im leaving and dont have time to fully check but u should look over this
 @app.get("/ai_flip_card/{player_name}")
-def ai_flip_card(player_name: str):
+def ai_flip_card(player_name: str, background_tasks: BackgroundTasks):
     if player_name not in ai_decks or not ai_decks[player_name]:
         return {"error": "AI has no cards left!"}
     
+    pile_claimed_by[player_name] = None
     # Pop the top card from the AI's deck               
     ai_card = ai_decks[player_name].pop(0)
     center_pile.append(ai_card)
-
+    print(f"[DEBUGGING] AI flipped card: {ai_card}. Center pile: {center_pile}")
+    if is_jack(ai_card):
+        background_tasks.add_task(get_ai_slap_task, player_name)
     return {
         "name": str(ai_card),
         "image": ai_card.get_imageFileName(),
         "center_pile": [str(c) for c in center_pile]
     }
 
-# Flip a card with auto refill
+# Flip a card with auto refill since we want the cards to keep cycling during the initial reaction time test
 @app.get("/flip_card/{player_name}")
 def flip_card(player_name: str):
 
@@ -165,9 +226,7 @@ def flip_card(player_name: str):
 @app.post("/save_reaction_time/{player_name}")
 def save_reaction_time(player_name: str, reaction_time: ReactionTime):
 
-    # If player is not in the reaction time, add that player to the reaction times dictionary
-    if player_name not in reaction_times:
-        reaction_times[player_name] = []
+    reaction_times[player_name] = []
 
     reaction_times[player_name].append(reaction_time.reaction_time)
     print(f"Reaction times for {player_name}: {reaction_times[player_name]}")  # Log to check
@@ -176,20 +235,23 @@ def save_reaction_time(player_name: str, reaction_time: ReactionTime):
 
 
 @app.post("/player_flip_card/{player_name}")
-def player_flip_card(player_name: str):
+def player_flip_card(player_name: str, background_tasks: BackgroundTasks):
     if player_name not in players:
         return {"error": "Player not found"}
     
     player = players[player_name]
     if not player.deck:
         return {"error": "Player deck is empty"}
-
+    
+    pile_claimed_by[player_name] = None
     card = player.deck.pop(0)
     print(str(card))
     center_pile.append(card)
-
+    print(f"[DEBUGGING] Player flipped card: {card}. Center pile: {center_pile}")
+    if is_jack(card):
+        background_tasks.add_task(get_ai_slap_task, player_name)
     return {
-        # This card doesn't work for some strange reason, if you want the card use the center_pile list and extract it
+       
         "card": str(card),
         "image": card.get_imageFileName(),
         "center_pile": [str(c) for c in center_pile],
@@ -199,17 +261,58 @@ def player_flip_card(player_name: str):
 def collect_center_pile(player_name: str):
     if player_name not in players:
         return {"error": "Player not found"}
-
+    if pile_claimed_by.get(player_name) is not None:
+        return {"message": "Pile already claimed", "collected": [], "player_deck_count": len(players[player_name].deck)}
     player = players[player_name]
-    collected_cards = center_pile.copy()
-    player.deck.extend(collected_cards)
-    center_pile.clear()
+    pile_claimed_by[player_name] = player_name
+    collected_cards = player.collect_center_pile(center_pile)
+    # collected_cards = center_pile.copy()
+    # player.deck.extend(collected_cards)
+    # center_pile.clear()
 
     return {
         "message": f"{len(collected_cards)} cards collected",
         "collected": [str(card) for card in collected_cards],
         "player_deck_count": len(player.deck)
     }
+
+
+@app.post('/bad_slap/{player_name}')
+def bad_slap(player_name: str):
+    print(f"Received player nameeee: {player_name}")  # Debugging line
+
+    if player_name not in players:
+        return {"error": "Player not found"}
+
+    player = players[player_name]
+
+    if not player.deck:
+        return {"error": "No cards left to give"}
+
+    # Pop the top card from the player's deck
+    give_card = player.deck.pop(0)
+
+
+    # Add the card to the AI's deck
+    # Idk how to actually add to the AI's deck
+    ai_decks[player_name].append(give_card)
+
+    # Debug: print the updated AI deck
+    print(f"AI deck for {player_name}: {ai_decks[player_name]}")
+
+    return {
+        "message": f"{player_name} made a bad slap. 1 card given to AI.",
+        "card_given": str(give_card),
+        "player_deck_size": len(player.deck),
+        "ai_deck_size": len(ai_decks[player_name])
+    }
+
+
+#For sending the predicted reaction time back into backend so the AI model can sleep for that amount of time before slapping the card
+@app.post("/set_ai_prediction")
+def set_ai_prediction(data: PredictionInput):
+    ai_reaction_predictions[data.player_name] = data.prediction / 1000  
+    return {"message": "Prediction updated"}
 
 @app.post("/predict_performance")
 def predict_performance(data: ReactionData):

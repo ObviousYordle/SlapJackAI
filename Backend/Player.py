@@ -17,6 +17,11 @@ class Player:
             return self.deck.pop(0)
         return None
 
+    def collect_center_pile(self, center_pile):
+        collected = center_pile.copy()
+        self.deck.extend(collected)
+        center_pile.clear()
+        return collected
 
     """Prints player's whole deck, ex: queen of hearts, king of diamonds, etc"""
     def __str__(self):
