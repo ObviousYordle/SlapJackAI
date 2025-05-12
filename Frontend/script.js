@@ -385,7 +385,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     alert("AI slapped a Jack!");
                     centerCard.style.display = "none";
                     centerPile = [];
-                    refreshDecksAndCheckGameOver();
 
                 }
             })
@@ -566,7 +565,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     startTime = performance.now();
                     console.log("[Player Flip] Jack appeared. Timer started.");
                 }
-                setTimeout(checkAISlapStatus, 3000);
+                setTimeout(checkAISlapStatus, 2000);
 
                 playerDeck.style.pointerEvents = "none";
 
@@ -597,11 +596,11 @@ document.addEventListener("DOMContentLoaded", () => {
                                 console.log("[Player Flip] Jack appeared. Timer started.");
                               }
 
+                            setTimeout(checkAISlapStatus, 2000);
                             playerDeck.style.pointerEvents = "auto";
 
                             refreshDecksAndCheckGameOver()
 
-                            setTimeout(checkAISlapStatus, 3000);
                         });
                 }, delay);
             });

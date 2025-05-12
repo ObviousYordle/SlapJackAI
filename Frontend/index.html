@@ -10,12 +10,14 @@
     <h1>Slapjack Game</h1>
 
     <!-- Entry to enter player name-->
-    <div id="player-entry">
-        <label for="player-name">Enter Player Name:</label>
-        <input type="text" id="player-name" placeholder="Enter name">
+    <!-- Entry to enter player name -->
+    <div id="player-entry" class="entry-container">
+        <label for="player-name" class="entry-label">Enter Player Name:</label>
+        <input type="text" id="player-name" class="entry-input" placeholder="Enter name">
         <button id="add-player-button" onclick="addPlayer()">Add Player</button>
-        
     </div>
+
+
 
     <!-- Player Info -->
     <div id="player-info"></div>
@@ -38,7 +40,7 @@
     </script>
     <!-- Instructions to record 10 reactions -->
     <div id="reaction-instruction" style="display: none;">
-        <p>We need to record your first 10 reactions to adjust the AI's difficulty to your skill level.</p>
+        <p>We need to record your first 5 reactions to adjust the AI's difficulty to your skill level.</p>
         <p>Once you start, you can then click on the card when you sees a Jack, your reaction time will be recorded.</p>
     </div>
 
