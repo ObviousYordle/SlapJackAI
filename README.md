@@ -16,5 +16,5 @@ see (venv) in front of your terminal directory
 3. Now in the same backend directory, run pip install -r .\requirements.txt to get all the dependencies on the project
 
 
-4. You should be set, now run python ./main.py to run the FastAPI call
+4. You should be set, now run python ./main.py to run the FastAPI call. Afterwards, enter the http://localhost:8000/static/home.html link to start on the home page.
 
